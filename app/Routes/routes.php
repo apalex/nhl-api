@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\Controllers\AboutController;
+use App\Controllers\ArenasController;
+use App\Controllers\GamesController;
 use App\Controllers\TeamsController;
 use App\Helpers\DateTimeHelper;
 use Psr\Http\Message\ResponseInterface as Response;
@@ -23,8 +25,26 @@ return static function (Slim\App $app): void {
     //* ROUTE: GET /teams/{team_id}
     $app->get('/teams/{team_id}', [TeamsController::class, 'handleGetTeamByID']);
 
-    //* ROUTE: GET /teams/{team_id}/player_stats
-    $app->get('/teams/{team_id}/player_stats', [TeamsController::class, 'handleGetTeamPlayerStats']);
+    //* ROUTE: GET /teams/{team_id}/games
+    $app->get('/teams/{team_id}/games', [TeamsController::class, 'handleGetTeamGames']);
+
+    //* ROUTE: GET /games
+    $app->get('/games', [GamesController::class, 'handleGetGames']);
+
+    //* ROUTE: GET /games/{game_id}
+    $app->get('/games/{game_id}', [GamesController::class, 'handleGetGameByID']);
+
+    //* ROUTE: GET /games/{game_id}/player_stats
+    $app->get('/games/{game_id}/player_stats', [GamesController::class, 'handleGetGamePlayerStats']);
+
+    //* ROUTE: GET /arenas
+    $app->get('/arenas', [ArenasController::class, 'handleGetArenas']);
+
+    //* ROUTE: GET /arenas/{arena_id}
+    $app->get('/arenas/{arena_id}', [ArenasController::class, 'handleGetArenaByID']);
+
+    //* ROUTE: GET /arenas/{arena_id}/games
+    $app->get('/arenas/{arena_id}/games', [ArenasController::class, 'handleGetArenaGames']);
 
     // $app->get('/test', [TestController::class, 'handleTest']);
 

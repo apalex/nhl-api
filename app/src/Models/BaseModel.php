@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Core\PDOService;
+use App\Helpers\PaginationHelper;
 use PDO;
 use Exception;
 
@@ -30,7 +31,7 @@ abstract class BaseModel
      * Holds the number of records to include per page..
      * @var int
      */
-    private $records_per_page = 5;
+    private $records_per_page = 3;
 
     /**
      * Instantiates the PDO wrapper.
@@ -247,5 +248,23 @@ abstract class BaseModel
     {
         $this->current_page = $current_page;
         $this->records_per_page = $records_per_page;
+    }
+
+    protected function paginate(string $sql, array $args = [], $fetchMode = PDO::FETCH_ASSOC): array
+    {
+        $total_records = $this->count($sql, $args);
+
+        $ph = new PaginationHelper($this->current_page, $this->records_per_page, $total_records);
+
+        $offset = $ph->getOffset();
+        $sql .= " LIMIT $this->records_per_page OFFSET $offset";
+
+        $data = $this->fetchAll($sql, $args);
+
+        $result = $ph->getPaginationMetadata();
+
+        $result['data'] = $data;
+
+        return $result;
     }
 }

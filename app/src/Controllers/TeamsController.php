@@ -14,21 +14,47 @@ class TeamsController extends BaseController
     public function handleGetTeams(Request $request, Response $response, array $uri_args): Response
     {
         $filters = $request->getQueryParams();
+
+        //* Validate Pagination
+
+        //* Validate Sort By
+
+        //* Validate Order By
+
+        //* Validate Team Info
+
         $teams = $this->teamsModel->getTeams($filters);
+
         return $this->renderJson($response, $teams);
     }
 
-    public function handleGetTeamByID(Request $request, Response $response): Response
+    public function handleGetTeamByID(Request $request, Response $response, array $uri_args): Response
     {
-        $filters = $request->getQueryParams();
-        $team = $this->teamsModel->getTeamByID(1, $filters);
-        return $this->renderJson($response, $team);
+        $team_id = $uri_args['team_id'];
+
+        //* Validate Team ID
+        // $this->validateTeamID($team_id, $request);
+
+        $team_info = $this->teamsModel->getTeamByID($team_id);
+
+        //* Validate Team
+        // $this->validateTeam($team_info, $request);
+
+        return $this->renderJson($response, $team_info);
     }
 
-    public function handleGetTeamPlayerStats(Request $request, Response $response, array $uri_args): Response
+    public function handleGetTeamGames(Request $request, Response $response, array $uri_args): Response
     {
         $filters = $request->getQueryParams();
-        $stats = $this->teamsModel->getTeamPlayerStats(1, $filters);
+
+        //* Validate Date
+
+        //* Validate Arena
+
+        //* Validate Tournament Type
+
+        //* Validate Side Start
+        $stats = $this->teamsModel->getTeamGames(1, $filters);
         return $this->renderJson($response, $stats);
     }
 }
