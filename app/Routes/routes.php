@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Controllers\AboutController;
+use App\Controllers\TeamsController;
 use App\Helpers\DateTimeHelper;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -15,6 +16,15 @@ return static function (Slim\App $app): void {
     // Routes with authentication
     //* ROUTE: GET /
     $app->get('/', [AboutController::class, 'handleAboutWebService']);
+
+    //* ROUTE: GET /teams
+    $app->get('/teams', [TeamsController::class, 'handleGetTeams']);
+
+    //* ROUTE: GET /teams/{team_id}
+    $app->get('/teams/{team_id}', [TeamsController::class, 'handleGetTeamByID']);
+
+    //* ROUTE: GET /teams/{team_id}/player_stats
+    $app->get('/teams/{team_id}/player_stats', [TeamsController::class, 'handleGetTeamPlayerStats']);
 
     // $app->get('/test', [TestController::class, 'handleTest']);
 
