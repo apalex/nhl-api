@@ -142,6 +142,15 @@ class TeamsModel extends BaseModel
             $filters_values['side_start'] = $filters['side_start'];
         }
 
-        return $this->paginate($sql, $filters_values);
+        //* Response Model
+        $team = $this->getTeamByID($team_id);
+        $game = $this->paginate($sql, $filters_values);
+        $result = [
+            "team" => $team,
+            "meta" => $game["meta"],
+            "goals" => $game["data"]
+        ];
+
+        return $result;
     }
 }

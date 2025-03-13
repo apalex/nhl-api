@@ -129,7 +129,7 @@ class TeamsController extends BaseController
         }
 
         //* Call Validate Player Info
-        $this->validateTeamInfo($team_info, $request);
+        $this->validateTeamGame($team_info, $request);
 
         return $this->renderJson($response, $team_info);
     }
@@ -150,7 +150,7 @@ class TeamsController extends BaseController
             //! provided id invalid
             throw new HttpInvalidIDException(
                 $request,
-                "The provided team id is invalid"
+                "The provided team id is invalid. Expected Format: int|number"
             );
         }
     }
@@ -167,7 +167,23 @@ class TeamsController extends BaseController
     {
         if (count($team_info['data']) <= 0) {
             //! no matching record in the db
-            throw new HttpInvalidInputException($request, "No matching record.");
+            throw new HttpInvalidInputException($request, "No matching record for team info found.");
+        }
+    }
+
+    /**
+     * Validates if team game information is available.
+     *
+     * @param mixed $team_info The team game information to validate.
+     * @param Request $request The HTTP request.
+     *
+     * @throws HttpInvalidInputException If no team game record is found.
+     */
+    private function validateTeamGame($team_info, Request $request)
+    {
+        if (count($team_info['goals']) <= 0) {
+            //! no matching record in the db
+            throw new HttpInvalidInputException($request, "No matching record for team games found.");
         }
     }
 
@@ -183,7 +199,7 @@ class TeamsController extends BaseController
     {
         if (count($team_info) == 0) {
             //! no matching record in the db
-            throw new HttpInvalidInputException($request, "No matching record.");
+            throw new HttpInvalidInputException($request, "No matching record for team found.");
         }
     }
 
