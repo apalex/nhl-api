@@ -250,6 +250,21 @@ abstract class BaseModel
         $this->records_per_page = $records_per_page;
     }
 
+    /**
+     * Paginates the results of an SQL query.
+     *
+     * This method executes a given SQL query with pagination applied. It calculates
+     * the total number of records, determines the offset and limit for pagination,
+     * executes the query, and returns the paginated results along with metadata.
+     *
+     * @param string $sql The SQL query to be paginated.
+     * @param array $args Optional parameters to be bound to the SQL query.
+     * @param int $fetchMode The PDO fetch mode (default: PDO::FETCH_ASSOC).
+     *
+     * @return array Returns an array containing paginated data and metadata,
+     *               including total records, total pages, current page,
+     *               and records per page.
+     */
     protected function paginate(string $sql, array $args = [], $fetchMode = PDO::FETCH_ASSOC): array
     {
         $total_records = $this->count($sql, $args);
