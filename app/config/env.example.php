@@ -25,7 +25,7 @@ declare(strict_types=1);
 return function (array $settings): array {
     // Database credentials
     $settings['db']['username'] = 'root';
-    $settings['db']['database'] = 'worldcup';
+    $settings['db']['database'] = 'nhl';
     $settings['db']['password'] = '';
 
     //TODO: Additional settings/configs can be declared here.

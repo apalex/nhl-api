@@ -34,8 +34,8 @@ return static function (Slim\App $app): void {
     //* ROUTE: GET /games/{game_id}
     $app->get('/games/{game_id}', [GamesController::class, 'handleGetGameByID']);
 
-    //* ROUTE: GET /games/{game_id}/player_stats
-    $app->get('/games/{game_id}/player_stats', [GamesController::class, 'handleGetGamePlayerStats']);
+    //* ROUTE: GET /games/{game_id}/stats
+    $app->get('/games/{game_id}/stats', [GamesController::class, 'handleGetGameStats']);
 
     //* ROUTE: GET /arenas
     $app->get('/arenas', [ArenasController::class, 'handleGetArenas']);
