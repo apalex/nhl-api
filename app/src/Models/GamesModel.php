@@ -38,9 +38,9 @@ class GamesModel extends BaseModel
         }
 
         //? Tournament Type Filter
-        if (isset($filters["tournament_type"])) {
-            $sql .= " AND game_type LIKE CONCAT(:tournament_type, '%') ";
-            $filter_values["tournament_type"] = $filters["tournament_type"];
+        if (isset($filters["game_type"])) {
+            $sql .= " AND game_type LIKE CONCAT(:game_type, '%') ";
+            $filter_values["game_type"] = $filters["game_type"];
         }
 
         //? Sort By

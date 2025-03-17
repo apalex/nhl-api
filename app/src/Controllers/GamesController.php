@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Exceptions\HttpInvalidIDException;
 use App\Exceptions\HttpInvalidInputException;
 use App\Models\GamesModel;
 use Psr\Http\Message\ResponseInterface as Response;
@@ -29,15 +30,53 @@ class GamesController extends BaseController
     {
         //? Step 1 - Extract the list of filters.
         $filters = $request->getQueryParams();
-        if (isset($filters["page"]) && isset($filters["limit"])) {
+
+        // Check if page parameter is a number
+        if (isset($filters['page']) && !is_numeric($filters['page'])) {
+            //! provided page invalid
+            throw new HttpInvalidInputException($request, "The 'page' parameter must be a valid number.");
+        }
+
+        // Check if page_size parameter is a number
+        if (isset($filters['page_size']) && !is_numeric($filters['page_size'])) {
+            //! provided page size invalid
+            throw new HttpInvalidInputException($request, "The 'page_size' parameter must be a valid number.");
+        }
+
+        if (isset($filters["page"]) && isset($filters["page_size"])) {
             $this->games_model->setPaginationOptions(
                 $filters["page"],
-                $filters["limit"]
+                $filters["page_size"]
             );
+        }
+
+        // Validate Sort By
+        if (isset($filters['sort_by'])) {
+            $this->validateSortBy($filters['sort_by'], $request);
+        }
+
+        // Validate Order By
+        if (isset($filters['order_by'])) {
+            $this->validateOrderBy($filters['order_by'], $request);
         }
 
         //? Step 2 - Retrieve the list of games.
         $games = $this->games_model->getGames($filters);
+
+        //* Validate Date
+        if (isset($filters['game_date'])) {
+            $game_date = $filters['game_date'];
+            $this->validateDate($game_date, $request);
+        }
+
+        //* Validate Game Type
+        if (isset($filters['game_type'])) {
+            $game_type = $filters['game_type'];
+            $this->validateGameType($game_type, $request);
+        }
+
+        // Validate Game Info
+        $this->validateGameInfo($games, $request);
 
         //? Step 3 - Return the JSON response.
         return $this->renderJson($response, $games);
@@ -66,6 +105,9 @@ class GamesController extends BaseController
 
         //? Step 3 - Retrieve the game details.
         $game_info = $this->games_model->getGamesById($game_id);
+
+        // Validate Game
+        $this->validateGame($game_info, $request);
 
         //? Step 4 - Handle Errors
         if (!$game_info) {
@@ -99,11 +141,24 @@ class GamesController extends BaseController
 
         //? Step 3 - Extract query parameters and apply pagination.
         $filters = $request->getQueryParams();
+        $this->validateFilters($filters, $request);
 
-        if (isset($filters["page"]) && isset($filters["limit"])) {
+        // Check if page parameter is a number
+        if (isset($filters['page']) && !is_numeric($filters['page'])) {
+            //! provided page invalid
+            throw new HttpInvalidInputException($request, "The 'page' parameter must be a valid number.");
+        }
+
+        // Check if page_size parameter is a number
+        if (isset($filters['page_size']) && !is_numeric($filters['page_size'])) {
+            //! provided page size invalid
+            throw new HttpInvalidInputException($request, "The 'page_size' parameter must be a valid number.");
+        }
+
+        if (isset($filters["page"]) && isset($filters["page_size"])) {
             $this->games_model->setPaginationOptions(
                 $filters["page"],
-                $filters["limit"]
+                $filters["page_size"]
             );
         }
 
@@ -117,5 +172,145 @@ class GamesController extends BaseController
 
         //? Step 6 - Return the JSON response.
         return $this->renderJson($response, $stats);
+    }
+
+    /**
+     * Validates the sort by format.
+     *
+     * @param string $sorted_filter The sort filter to validate.
+     * @param Request $request The HTTP request.
+     *
+     * @throws HttpInvalidInputException If the sort by filter is not valid.
+     */
+    private function validateSortBy(mixed $sorted_filter, Request $request)
+    {
+        $allowed = ['game_date', 'game_type', 'side_start', 'home_score', 'away_score'];
+
+        if (!in_array($sorted_filter, $allowed)) {
+            //! provided sort filter invalid
+            throw new HttpInvalidInputException($request, "The provided sort by filter is invalid. Expected input: ['game_date', 'game_type', 'side_start', 'home_score ', 'away_score']");
+        }
+    }
+
+    /**
+     * Validates the order by format.
+     *
+     * @param string $order_by The order by to validate.
+     * @param Request $request The HTTP request.
+     *
+     * @throws HttpInvalidInputException If the order by filter is not valid.
+     */
+    private function validateOrderBy(mixed $order_by, Request $request)
+    {
+        $allowed = ['asc', 'desc'];
+        if (!in_array(strtolower($order_by), $allowed)) {
+            //! provided order by filter invalid
+            throw new HttpInvalidInputException($request, "The provided order by filter is invalid. Expected input: ASC/asc or DESC/desc");
+        }
+    }
+
+    /**
+     * Validates if game information is available.
+     *
+     * @param mixed $game_info The game information to validate.
+     * @param Request $request The HTTP request.
+     *
+     * @throws HttpInvalidInputException If no game record is found.
+     */
+    private function validateGameInfo($game_info, Request $request)
+    {
+        if (count($game_info['data']) <= 0) {
+            //! no matching record in the db
+            throw new HttpInvalidInputException($request, "No matching record for game info found.");
+        }
+    }
+
+    /**
+     * Validates if game singleton information is available.
+     *
+     * @param mixed $game_info The game information to validate.
+     * @param Request $request The HTTP request.
+     *
+     * @throws HttpInvalidInputException If no game record is found.
+     */
+    private function validateGame($game_info, Request $request)
+    {
+        if (count($game_info) == 0) {
+            //! no matching record in the db
+            throw new HttpInvalidInputException($request, "No matching record for game found.");
+        }
+    }
+
+    /**
+     * Validates date format.
+     *
+     * @param string $game_date The date of game to validate.
+     * @param Request $request The HTTP request.
+     *
+     * @throws HttpInvalidIDException If the date format is incorrect.
+     */
+    private function validateDate(string $game_date, Request $request)
+    {
+        $regex_date = '/^\d{4}-\d{2}-\d{2}$/';
+
+        if (preg_match($regex_date, $game_date) === 0) {
+            //! provided date of birth invalid
+            throw new HttpInvalidIDException(
+                $request,
+                "The provided date is invalid. Expected format: YYYY-MM-DD"
+            );
+        }
+    }
+
+    /**
+     * Validates the game type format.
+     *
+     * @param string $game_type The game type to validate.
+     * @param Request $request The HTTP request.
+     *
+     * @throws HttpInvalidInputException If the game type is not valid.
+     */
+    private function validateGameType(mixed $game_type, Request $request)
+    {
+        $allowed = ['regular', 'playoffs', 'preseason'];
+
+        if (!in_array($game_type, $allowed)) {
+            //! provided sort filter invalid
+            throw new HttpInvalidInputException($request, "The provided game type is invalid. Expected input: ['regular', 'playoffs', 'preseason']");
+        }
+    }
+
+    /**
+     * Validates the filters provided in the request.
+     *
+     * @param array $filters The filters to validate.
+     * @param Request $request The HTTP request.
+     *
+     * @throws HttpInvalidInputException If any filter is invalid.
+     */
+    private function validateFilters(array $filters, Request $request): void
+    {
+        //! First Name Validation (must be a non-numeric string or should be not empty)
+        if (
+            isset($filters['first_name']) &&
+            (empty(trim($filters['first_name'])) || is_numeric($filters['first_name']))
+        ) {
+            throw new HttpInvalidInputException($request, "Invalid First Name. Expected a non-empty string containing alphabetical characters.");
+        }
+
+        //! Goals Scored Validation (integer, greater than or equal to zero)
+        if (isset($filters['goals_scored']) && (!is_numeric($filters['goals_scored']) || $filters['goals_scored'] < 0)) {
+            throw new HttpInvalidInputException($request, "Invalid Goals Scored value. Expected a non-negative integer.");
+        }
+
+        //! Assists Validation (integer, greater than or equal to zero)
+        if (isset($filters['assists']) && (!is_numeric($filters['assists']) || $filters['assists'] < 0)) {
+            throw new HttpInvalidInputException($request, "Invalid Assists value. Expected a non-negative integer.");
+        }
+
+        //! SOG Validation (integer, greater than or equal to zero)
+        if (isset($filters['sog']) && (!is_numeric($filters['sog']) || $filters['sog'] < 0)) {
+            throw new HttpInvalidInputException($request, "Invalid SOG value. Expected a non-negative integer.");
+        }
     }
 }
