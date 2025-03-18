@@ -89,7 +89,7 @@ class GamesModel extends BaseModel
 
         $game = $this->fetchSingle($sql, ["game_id" => $game_id]);
 
-        return $game;
+        return $game !== false ? $game : [];
     }
 
     /**
@@ -99,16 +99,16 @@ class GamesModel extends BaseModel
      * @param array $filters Optional filters for refining stats.
      * @return mixed The game statistics or null if not found.
      */
-    public function getStatsByGameId(string $stat_id, array $filters): mixed
+    public function getStatsByGameId(string $game_id, array $filters): mixed
     {
-        $filter_values = ["stat_id" => $stat_id];
+        $filter_values = ["game_id" => $game_id];
 
         $sql = "
             SELECT s.*, g.game_date, g.home_team_id, g.away_team_id, p.first_name
             FROM statistics s
             LEFT JOIN games g ON s.game_id = g.game_id
-            LEFT JOIN players p ON s.player_id = p.player_id
-            WHERE s.game_id = :stat_id
+            LEFT JOIN players p ON p.player_id = s.player_id
+            WHERE g.game_id = :game_id
         ";
 
         //? First Name
@@ -135,6 +135,15 @@ class GamesModel extends BaseModel
             $filter_values["sog"] = $filters["sog"];
         }
 
-        return $this->paginate($sql, $filter_values);
+        //? Response Model
+        $game = $this->getGamesById($game_id);
+        $stats = $this->paginate($sql, $filter_values);
+        $result = [
+            "game" => $game,
+            "meta" => $stats["meta"],
+            "goals" => $stats["data"]
+        ];
+
+        return $result;
     }
 }
