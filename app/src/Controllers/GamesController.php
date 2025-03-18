@@ -166,8 +166,9 @@ class GamesController extends BaseController
         $stats = $this->games_model->getStatsByGameId($game_id, $filters);
 
         //? Step 5 - Handle Errors.
-        if (!$stats) {
-            throw new HttpNotFoundException($request, "No goals found for this player!");
+        if (count($stats['player_statistics']) <= 0) {
+            //! no matching record in the db
+            throw new HttpInvalidInputException($request, "No matching record for statistics found for this player.");
         }
 
         //? Step 6 - Return the JSON response.
