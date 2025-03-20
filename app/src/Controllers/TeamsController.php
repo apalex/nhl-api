@@ -51,6 +51,11 @@ class TeamsController extends BaseController
             $this->validateOrderBy($filters['order_by'], $request);
         }
 
+        //* Validate Founding Year
+        if (isset($filters['founding_year'])) {
+            $this->validateFoundingYear($filters['founding_year'], $request);
+        }
+
         $teams = $this->teamsModel->getTeams($filters);
 
         //* Validate Team Info
@@ -264,6 +269,27 @@ class TeamsController extends BaseController
         // Check if page and page_size parameters are present inside URI
         if (isset($filters['page']) && isset($filters['page_size'])) {
             $this->teamsModel->setPaginationOptions($filters['page'], $filters['page_size']);
+        }
+    }
+
+    /**
+     * Validates founding_year format.
+     *
+     * @param string $founding_year The founding_year of team to validate.
+     * @param Request $request The HTTP request.
+     *
+     * @throws HttpInvalidIDException If the founding year format is incorrect.
+     */
+    private function validateFoundingYear(string $founding_year, Request $request)
+    {
+        $regex_year = '/^\d{4}$/';
+
+        if (preg_match($regex_year, $founding_year) === 0) {
+            //! provided founding year invalid
+            throw new HttpInvalidIDException(
+                $request,
+                "The provided founding year is invalid. Expected format: number|int"
+            );
         }
     }
 

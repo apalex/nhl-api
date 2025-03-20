@@ -141,7 +141,7 @@ class GamesModel extends BaseModel
         $result = [
             "game" => $game,
             "meta" => $stats["meta"],
-            "goals" => $stats["data"]
+            "player_statistics" => $stats["data"]
         ];
 
         return $result;
