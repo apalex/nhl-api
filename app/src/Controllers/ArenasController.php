@@ -17,7 +17,10 @@ class ArenasController extends BaseController
     /**
      * @var ArenasModel $arenasModel The model handling arena data.
      */
-    public function __construct(private ArenasModel $arenasModel) {}
+    public function __construct(private ArenasModel $arenasModel) {
+
+
+    }
 
     /**
      * Handles requests to retrieve multiple arenas with optional filters.
@@ -26,8 +29,20 @@ class ArenasController extends BaseController
      * @param Response $response The outgoing HTTP response.
      * @return Response The JSON response containing arena data.
      */
-    public function handleGetArenas(Request $request, Response $response): Response
-    {
+    public function handleGetArenas(Request $request, Response $response): Response{
+        // Validate date input
+        $date = $request->getParsedBody()['date'] ?? null;
+        if ($date && !preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $date)) {
+            throw new HttpInvalidInputException($request, "Invalid date format. Expected YYYY-MM-DD HH:MM:SS");
+        }
+        // Validate game type input
+        $allowedGameTypes = ['deathmatch', 'team battle', 'free for all'];
+        $gameType = $request->getParsedBody()['game_type'] ?? null;
+        if ($gameType && !in_array($gameType, $allowedGameTypes)) {
+            throw new HttpInvalidInputException($request, "Invalid game type.");
+        }
+
+
         // Extract query parameters (filters)
         $filters = $request->getQueryParams();
 
@@ -83,7 +98,18 @@ class ArenasController extends BaseController
      * @param array $uri_args The URI arguments (e.g., arena_id).
      * @return Response The JSON response containing the arena details.
      */
-    public function handleGetArenaByID(Request $request, Response $response, array $uri_args): Response
+    public function handleGetArenaByID(Request $request, Response $response, array $uri_args): Response{
+        // Validate date input
+        $date = $request->getParsedBody()['date'] ?? null;
+        if ($date && !preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $date)) {
+            throw new HttpInvalidInputException($request, "Invalid date format. Expected YYYY-MM-DD HH:MM:SS");
+        }
+        // Validate game type input
+        $allowedGameTypes = ['deathmatch', 'team battle', 'free for all'];
+        $gameType = $request->getParsedBody()['game_type'] ?? null;
+        if ($gameType && !in_array($gameType, $allowedGameTypes)) {
+            throw new HttpInvalidInputException($request, "Invalid game type.");
+        }
     {
         // Extract and validate arena_id
         $arena_id = $uri_args["arena_id"];
@@ -105,7 +131,7 @@ class ArenasController extends BaseController
             "arena" => $arena_info
         ]);
     }
-
+    }
     /**
      * Handles requests to retrieve arenas for a specific team ID.
      *
@@ -114,7 +140,18 @@ class ArenasController extends BaseController
      * @param array $uri_args Route arguments containing team ID.
      * @return Response The JSON response containing related arenas.
      */
-    public function handleGetArenasByTeamID(Request $request, Response $response, array $uri_args): Response
+    public function handleGetArenasByTeamID(Request $request, Response $response, array $uri_args): Response{
+        // Validate date input
+        $date = $request->getParsedBody()['date'] ?? null;
+        if ($date && !preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $date)) {
+            throw new HttpInvalidInputException($request, "Invalid date format. Expected YYYY-MM-DD HH:MM:SS");
+        }
+        // Validate game type input
+        $allowedGameTypes = ['deathmatch', 'team battle', 'free for all'];
+        $gameType = $request->getParsedBody()['game_type'] ?? null;
+        if ($gameType && !in_array($gameType, $allowedGameTypes)) {
+            throw new HttpInvalidInputException($request, "Invalid game type.");
+        }
     {
         $team_id = $uri_args['team_id'];
 
@@ -131,7 +168,7 @@ class ArenasController extends BaseController
             "arenas" => $arenas
         ]);
     }
-
+    }
     /**
      * Validates the sorting parameter.
      */
