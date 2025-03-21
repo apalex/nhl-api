@@ -2,69 +2,175 @@
 
 namespace App\Controllers;
 
+use App\Exceptions\HttpInvalidIDException;
+use App\Exceptions\HttpInvalidInputException;
+use App\Models\ArenasModel;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
-use App\Models\ArenaModel;
-use App\Core\PDOService;
-use App\Exceptions\HttpInvalidInputException;
-use Slim\Exception\HttpBadRequestException;
 use Slim\Exception\HttpNotFoundException;
 
-class ArenasController
+/**
+ * Controller for handling arena-related requests.
+ */
+class ArenasController extends BaseController
 {
-    private ArenasModel $arenaModel;
-
     /**
-     * Constructor for ArenasController.
-     *
-     * @param PDOService $pdo The PDO service for database interactions.
+     * @var ArenasModel $arenas_model The model handling arena data.
      */
-    public function __construct(PDOService $pdo)
-    {
-        $this->arenaModel = new ArenasModel($pdo);
-    }
+    public function __construct(private ArenasModel $arenas_model) {}
 
     /**
-     * Handles retrieving a list of arenas with filtering, sorting, and pagination.
+     * Handles requests to retrieve multiple arenas with optional filters.
      *
-     * @param Request $request
-     * @param Response $response
-     * @return Response
-     * @throws HttpBadRequestException
+     * @param Request $request The incoming HTTP request.
+     * @param Response $response The outgoing HTTP response.
+     * @return Response The JSON response containing arena data.
      */
     public function handleGetArenas(Request $request, Response $response): Response
     {
-        $queryParams = $request->getQueryParams();
+        // Extract query parameters (filters)
+        $filters = $request->getQueryParams();
 
-        try {
-            $arenas = $this->arenaModel->getArenas($queryParams);
+        // Validate Pagination
+        if (isset($filters['page']) && !is_numeric($filters['page'])) {
+            throw new HttpInvalidInputException($request, "The 'page' parameter must be a valid number.");
+        }
 
-            $response->getBody()->write(json_encode($arenas));
-            return $response->withHeader('Content-Type', 'application/json');
-        } catch (\Exception $e) {
-            throw new HttpBadRequestException($request, "Invalid request parameters.");
+        if (isset($filters['page_size']) && !is_numeric($filters['page_size'])) {
+            throw new HttpInvalidInputException($request, "The 'page_size' parameter must be a valid number.");
+        }
+
+        if (isset($filters["page"]) && isset($filters["page_size"])) {
+            $this->arenas_model->setPaginationOptions(
+                $filters["page"],
+                $filters["page_size"]
+            );
+        }
+
+        // Validate Sorting
+        if (isset($filters['sort_by'])) {
+            $this->validateSortBy($filters['sort_by'], $request);
+        }
+
+        // Validate Ordering
+        if (isset($filters['order_by'])) {
+            $this->validateOrderBy($filters['order_by'], $request);
+        }
+
+        // Validate Arena Name
+        if (isset($filters['arena_name'])) {
+            $this->validateArenaName($filters['arena_name'], $request);
+        }
+
+        // Retrieve the list of arenas
+        $arenas = $this->arenas_model->getArenas($filters);
+
+        // Validate Arena Data
+        $this->validateArenaInfo($arenas, $request);
+
+        // Return JSON response
+        return $this->renderJson($response, [
+            "status" => "success",
+            "arenas" => $arenas
+        ]);
+    }
+
+    /**
+     * Handles requests to retrieve an arena by ID.
+     *
+     * @param Request $request The HTTP request object.
+     * @param Response $response The HTTP response object.
+     * @param array $uri_args The URI arguments (e.g., arena_id).
+     * @return Response The JSON response containing the arena details.
+     */
+    public function handleGetArenaByID(Request $request, Response $response, array $uri_args): Response
+    {
+        // Extract and validate arena_id
+        $arena_id = $uri_args["arena_id"];
+
+        if (!ctype_digit($arena_id)) {
+            throw new HttpInvalidIDException($request, "The provided arena ID is invalid!");
+        }
+
+        // Retrieve the arena details
+        $arena_info = $this->arenas_model->getArenaByID($arena_id);
+
+        // Validate Arena
+        if (!$arena_info) {
+            throw new HttpNotFoundException($request, "The provided arena ID was not found!");
+        }
+
+        return $this->renderJson($response, [
+            "status" => "success",
+            "arena" => $arena_info
+        ]);
+    }
+
+    /**
+     * Handles requests to retrieve arenas for a specific team ID.
+     *
+     * @param Request $request The HTTP request object.
+     * @param Response $response The HTTP response object.
+     * @param array $uri_args Route arguments containing team ID.
+     * @return Response The JSON response containing related arenas.
+     */
+    public function handleGetArenasByTeamID(Request $request, Response $response, array $uri_args): Response
+    {
+        $team_id = $uri_args['team_id'];
+
+        // Validate Team ID
+        if (!ctype_digit($team_id)) {
+            throw new HttpInvalidInputException($request, "Invalid team_id. It must be a numeric value.");
+        }
+
+        $arenas = $this->arenas_model->getArenas(["team_id" => $team_id]);
+
+        return $this->renderJson($response, [
+            "status" => "success",
+            "team_id" => $team_id,
+            "arenas" => $arenas
+        ]);
+    }
+
+    /**
+     * Validates the sorting parameter.
+     */
+    private function validateSortBy(string $sortBy, Request $request)
+    {
+        $allowedFields = ['arena_name', 'capacity', 'year_built'];
+        if (!in_array($sortBy, $allowedFields)) {
+            throw new HttpInvalidInputException($request, "Invalid sort_by parameter. Allowed: " . implode(", ", $allowedFields));
         }
     }
 
     /**
-     * Handles retrieving a single arena by ID.
-     *
-     * @param Request $request
-     * @param Response $response
-     * @param array $args
-     * @return Response
-     * @throws HttpNotFoundException
+     * Validates the order parameter.
      */
-    public function handleGetArenaByID(Request $request, Response $response, array $args): Response
+    private function validateOrderBy(string $orderBy, Request $request)
     {
-        $arenaId = $args['arena_id'];
-        $arena = $this->arenaModel->getArenaById($arenaId);
-
-        if (!$arena) {
-            throw new HttpInvalidInputException($request, "Arena not found");
+        $allowedOrders = ['asc', 'desc'];
+        if (!in_array(strtolower($orderBy), $allowedOrders)) {
+            throw new HttpInvalidInputException($request, "Invalid order_by parameter. Allowed: ASC, DESC");
         }
+    }
 
-        $response->getBody()->write(json_encode($arena));
-        return $response->withHeader('Content-Type', 'application/json');
+    /**
+     * Validates the arena name format.
+     */
+    private function validateArenaName(string $arenaName, Request $request)
+    {
+        if (empty($arenaName) || !preg_match('/^[a-zA-Z0-9 ]+$/', $arenaName)) {
+            throw new HttpInvalidInputException($request, "Invalid arena name. Only letters, numbers, and spaces are allowed.");
+        }
+    }
+
+    /**
+     * Validates if arena data is available.
+     */
+    private function validateArenaInfo($arenas, Request $request)
+    {
+        if (count($arenas['data']) <= 0) {
+            throw new HttpInvalidInputException($request, "No matching record for arenas found.");
+        }
     }
 }

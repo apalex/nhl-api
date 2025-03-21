@@ -96,4 +96,45 @@ class ArenasModel extends BaseModel
 
         return $this->fetchSingle($sql, ["arena_id" => $arena_id]);
     }
+    public function getGamesByArenaId(string $arena_id, array $filters): mixed
+    {
+        $filters_values = ['arena_id' => $arena_id];
+
+        //* Default SQL Query
+        $sql = "SELECT g.*
+                FROM games g
+                JOIN arenas a ON a.arena_id = g.arena_id
+                WHERE g.arena_id = :arena_id";
+
+        //* Date (Condition: greater than or equal)
+        if (isset($filters['date'])) {
+            $sql .= " AND g.game_date >= :date";
+            $filters_values['date'] = $filters['date'];
+        }
+
+        //* Arena Name
+        if (isset($filters['arena_name'])) {
+            $sql .= " AND a.arena_name LIKE CONCAT(:arena_name, '%')";
+            $filters_values['arena_name'] = $filters['arena_name'];
+        }
+
+        //* Game Type
+        if (isset($filters['game_type'])) {
+            $sql .= " AND g.game_type LIKE CONCAT(:game_type, '%')";
+            $filters_values['game_type'] = $filters['game_type'];
+        }
+
+        //* Execute Query & Paginate Results
+        $games = $this->paginate($sql, $filters_values);
+
+        //* Response Model
+        $result = [
+            "arena_id" => $arena_id,
+            "meta" => $games["meta"],
+            "games" => $games["data"]
+        ];
+
+        return $result;
+    }
+
 }
