@@ -11,6 +11,7 @@
 
 declare(strict_types=1);
 
+use App\Handlers\CustomErrorHandler;
 use App\Middleware\ContentNegotiationMiddleware;
 use Slim\App;
 
@@ -48,9 +49,11 @@ return function (App $app): void {
     $errorMiddleware = $app->addErrorMiddleware(true, true, true);
 
     /**
-     * Forces the default error handler to return JSON-formatted error responses.
+     * Sets the error handler to a Custom Error Handler to return JSON-formatted error responses.
      */
-    $errorMiddleware->getDefaultErrorHandler()->forceContentType(APP_MEDIA_TYPE_JSON);
+    $errorMiddleware->setDefaultErrorHandler(CustomErrorHandler::class);
+
+    //!OLD ERROR HANDLER! $errorMiddleware->getDefaultErrorHandler()->forceContentType(APP_MEDIA_TYPE_JSON);
 
     //! NOTE: You can override the default error handler with your custom error handler.
     //* For more details, refer to Slim framework's documentation.
