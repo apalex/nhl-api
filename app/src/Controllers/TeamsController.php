@@ -61,7 +61,14 @@ class TeamsController extends BaseController
         //* Validate Team Info
         $this->validateTeamInfo($teams, $request);
 
-        return $this->renderJson($response, $teams);
+        return $this->renderJson($response, [
+            "status" => array(
+                "type" => "successful",
+                "code" => 200,
+                "message" => "Team's fetched successfully",
+            ),
+            "teams" => $teams
+        ]);
     }
 
     /**
@@ -87,7 +94,14 @@ class TeamsController extends BaseController
         //* Validate Team
         $this->validateTeam($team_info, $request);
 
-        return $this->renderJson($response, $team_info);
+        return $this->renderJson($response, [
+            "status" => array(
+                "type" => "successful",
+                "code" => 200,
+                "message" => "Team details fetched successfully",
+            ),
+            "team" => $team_info
+        ]);
     }
 
     /**
@@ -136,7 +150,14 @@ class TeamsController extends BaseController
         //* Call Validate Player Info
         $this->validateTeamGame($team_info, $request);
 
-        return $this->renderJson($response, $team_info);
+        return $this->renderJson($response, [
+            "status" => array(
+                "type" => "successful",
+                "code" => 200,
+                "message" => "Team games fetched successfully",
+            ),
+            "teams" => $team_info
+        ]);
     }
 
     /**
