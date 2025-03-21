@@ -15,12 +15,9 @@ use Slim\Exception\HttpNotFoundException;
 class ArenasController extends BaseController
 {
     /**
-     * @var ArenasModel $arenasModel The model handling arena data.
+     * @var ArenasModel $arenas_model The model handling arena data.
      */
-    public function __construct(private ArenasModel $arenasModel) {
-
-
-    }
+    public function __construct(private ArenasModel $arenas_model) {}
 
     /**
      * Handles requests to retrieve multiple arenas with optional filters.
@@ -29,20 +26,8 @@ class ArenasController extends BaseController
      * @param Response $response The outgoing HTTP response.
      * @return Response The JSON response containing arena data.
      */
-    public function handleGetArenas(Request $request, Response $response): Response{
-        // Validate date input
-        $date = $request->getParsedBody()['date'] ?? null;
-        if ($date && !preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $date)) {
-            throw new HttpInvalidInputException($request, "Invalid date format. Expected YYYY-MM-DD HH:MM:SS");
-        }
-        // Validate game type input
-        $allowed = ['regular', 'playoffs', 'preseason'];
-        $gameType = $request->getParsedBody()['game_type'] ?? null;
-        if ($gameType && !in_array($gameType, $allowed)) {
-            throw new HttpInvalidInputException($request, "Invalid game type.");
-        }
-
-
+    public function handleGetArenas(Request $request, Response $response): Response
+    {
         // Extract query parameters (filters)
         $filters = $request->getQueryParams();
 
@@ -56,7 +41,7 @@ class ArenasController extends BaseController
         }
 
         if (isset($filters["page"]) && isset($filters["page_size"])) {
-            $this->arenasModel->setPaginationOptions(
+            $this->arenas_model->setPaginationOptions(
                 $filters["page"],
                 $filters["page_size"]
             );
@@ -78,15 +63,19 @@ class ArenasController extends BaseController
         }
 
         // Retrieve the list of arenas
-        $arenas = $this->arenasModel->getArenas($filters);
+        $arenas = $this->arenas_model->getArenas($filters);
 
         // Validate Arena Data
         $this->validateArenaInfo($arenas, $request);
 
         // Return JSON response
         return $this->renderJson($response, [
-            "status" => "success",
-            "arenas" => $arenas
+            "status" => array(
+                "type" => "successful",
+                "code" => 200,
+                "message" => "Team details fetched successfully",
+            ),
+            "team" => $arenas
         ]);
     }
 
@@ -98,18 +87,7 @@ class ArenasController extends BaseController
      * @param array $uri_args The URI arguments (e.g., arena_id).
      * @return Response The JSON response containing the arena details.
      */
-    public function handleGetArenaByID(Request $request, Response $response, array $uri_args): Response{
-        // Validate date input
-        $date = $request->getParsedBody()['date'] ?? null;
-        if ($date && !preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $date)) {
-            throw new HttpInvalidInputException($request, "Invalid date format. Expected YYYY-MM-DD HH:MM:SS");
-        }
-        // Validate game type input
-       $allowed = ['regular', 'playoffs', 'preseason'];
-        $gameType = $request->getParsedBody()['game_type'] ?? null;
-        if ($gameType && !in_array($gameType, $allowedGameTypes)) {
-            throw new HttpInvalidInputException($request, "Invalid game type.");
-        }
+    public function  handleGetArenaByID(Request $request, Response $response, array $uri_args): Response
     {
         // Extract and validate arena_id
         $arena_id = $uri_args["arena_id"];
@@ -119,7 +97,7 @@ class ArenasController extends BaseController
         }
 
         // Retrieve the arena details
-        $arena_info = $this->arenasModel->getArenaByID($arena_id);
+        $arena_info = $this->arenas_model->getArenaByID($arena_id);
 
         // Validate Arena
         if (!$arena_info) {
@@ -130,12 +108,12 @@ class ArenasController extends BaseController
             "status" => array(
                 "type" => "successful",
                 "code" => 200,
-                "message" => "Arena details fetched successfully",
+                "message" => "Team details fetched successfully",
             ),
             "team" => $arena_info
         ]);
     }
-    }
+
     /**
      * Handles requests to retrieve arenas for a specific team ID.
      *
@@ -144,18 +122,7 @@ class ArenasController extends BaseController
      * @param array $uri_args Route arguments containing team ID.
      * @return Response The JSON response containing related arenas.
      */
-    public function handleGetArenasByTeamID(Request $request, Response $response, array $uri_args): Response{
-        // Validate date input
-        $date = $request->getParsedBody()['date'] ?? null;
-        if ($date && !preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $date)) {
-            throw new HttpInvalidInputException($request, "Invalid date format. Expected YYYY-MM-DD HH:MM:SS");
-        }
-        // Validate game type input
-        $allowedGameTypes = ['deathmatch', 'team battle', 'free for all'];
-        $gameType = $request->getParsedBody()['game_type'] ?? null;
-        if ($gameType && !in_array($gameType, $allowedGameTypes)) {
-            throw new HttpInvalidInputException($request, "Invalid game type.");
-        }
+    public function handleArenasByTeamID(Request $request, Response $response, array $uri_args): Response
     {
         $team_id = $uri_args['team_id'];
 
@@ -164,18 +131,15 @@ class ArenasController extends BaseController
             throw new HttpInvalidInputException($request, "Invalid team_id. It must be a numeric value.");
         }
 
-        $arenas = $this->arenasModel->getArenas(["team_id" => $team_id]);
+        $arenas = $this->arenas_model->getArenas(["team_id" => $team_id]);
 
         return $this->renderJson($response, [
-            "status" => array(
-                "type" => "successful",
-                "code" => 200,
-                "message" => "Arena details fetched successfully",
-            ),
-            "team" => $arena_info
+            "status" => "success",
+            "team_id" => $team_id,
+            "arenas" => $arenas
         ]);
     }
-    }
+
     /**
      * Validates the sorting parameter.
      */

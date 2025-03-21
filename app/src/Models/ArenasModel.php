@@ -32,32 +32,33 @@ class ArenasModel extends BaseModel
         $sql = "SELECT * FROM arenas WHERE 1 ";
 
         //? Name Filter
-        if (isset($filters["name"])) {
-            $sql .= " AND name LIKE CONCAT(:name, '%') ";
-            $filter_values["name"] = $filters["name"];
+        if (isset($filters["arena_name"])) {
+            $sql .= " AND arena_name LIKE CONCAT(:arena_name, '%') ";
+            $filter_values["arena_name"] = $filters["arena_name"];
         }
 
-        //? Location Filter
-        if (isset($filters["location"])) {
-            $sql .= " AND location LIKE CONCAT(:location, '%') ";
-            $filter_values["location"] = $filters["location"];
+        //? city Filter
+        if (isset($filters["city"])) {
+            $sql .= " AND city LIKE CONCAT(:city, '%') ";
+            $filter_values["city"] = $filters["city"];
+        }
+        if (isset($filters["province"])) {
+            $sql .= " AND province LIKE CONCAT(:province, '%') ";
+            $filter_values["province"] = $filters["province"];
         }
 
         //? Capacity Filter
-        if (isset($filters["capacity_min"])) {
-            $sql .= " AND capacity >= :capacity_min";
-            $filter_values["capacity_min"] = $filters["capacity_min"];
+        if (isset($filters["capacity"])) {
+            $sql .= " AND capacity >= :capacity";
+            $filter_values["capacity"] = $filters["capacity"];
         }
-        if (isset($filters["capacity_max"])) {
-            $sql .= " AND capacity <= :capacity_max";
-            $filter_values["capacity_max"] = $filters["capacity_max"];
-        }
+
 
         //? Sort By
         if (isset($filters["sort_by"])) {
             switch (strtolower($filters['sort_by'])) {
                 case 'name':
-                    $sql .= " ORDER BY name";
+                    $sql .= " ORDER BY arena_name";
                     break;
                 case 'location':
                     $sql .= " ORDER BY location";
@@ -92,9 +93,11 @@ class ArenasModel extends BaseModel
      */
     public function getArenaById(string $arena_id): mixed
     {
-        $sql = "SELECT * FROM arenas WHERE id = :arena_id";
+        $sql = "SELECT * FROM arenas WHERE arena_id = :arena_id";
 
-        return $this->fetchSingle($sql, ["arena_id" => $arena_id]);
+        $result = $this->fetchSingle($sql, ['arena_id' => $arena_id]);
+
+        return $result !== false ? $result : [];
     }
     public function getGamesByArenaId(string $arena_id, array $filters): mixed
     {
@@ -136,5 +139,4 @@ class ArenasModel extends BaseModel
 
         return $result;
     }
-
 }
