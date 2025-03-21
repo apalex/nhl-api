@@ -144,11 +144,11 @@ class TeamsModel extends BaseModel
 
         //* Response Model
         $team = $this->getTeamByID($team_id);
-        $game = $this->paginate($sql, $filters_values);
+        $games = $this->paginate($sql, $filters_values);
         $result = [
             "team" => $team,
-            "meta" => $game["meta"],
-            "goals" => $game["data"]
+            "meta" => $games["meta"],
+            "goals" => $games["data"]
         ];
 
         return $result;

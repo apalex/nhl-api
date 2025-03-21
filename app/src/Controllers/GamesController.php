@@ -78,18 +78,16 @@ class GamesController extends BaseController
         // Validate Game Info
         $this->validateGameInfo($games, $request);
 
-        //? Step 3 - Return the JSON response.
-        return $this->renderJson(
-            $response,
-            [
-                "status" => array(
-                    "type" => "successful",
-                    "code" => 200,
-                    "message" => "Games fetched successfully",
-                ),
-                "game" => $games
-            ]
+        //* Valid HTTP Response Model
+        $status = array(
+            "Type" => "successful",
+            "Code" => 200,
+            "Content-Type" => "application/json",
+            "Message" => "Games fetched successfully",
         );
+        $games["status"] = $status;
+        $games = array_reverse($games);
+        return $this->renderJson($response, $games);
     }
 
     /**
@@ -129,9 +127,10 @@ class GamesController extends BaseController
             $response,
             [
                 "status" => array(
-                    "type" => "successful",
-                    "code" => 200,
-                    "message" => "Game details fetched successfully",
+                    "Type" => "successful",
+                    "Code" => 200,
+                    "Content-Type" => "application/json",
+                    "Message" => "Game details fetched successfully",
                 ),
                 "game" => $game_info
             ]
@@ -196,9 +195,10 @@ class GamesController extends BaseController
             $response,
             [
                 "status" => array(
-                    "type" => "successful",
-                    "code" => 200,
-                    "message" => "Game stats fetched successfully",
+                    "Type" => "successful",
+                    "Code" => 200,
+                    "Content-Type" => "application/json",
+                    "Message" => "Game stats fetched successfully",
                 ),
                 "games" => $stats
             ]

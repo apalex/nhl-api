@@ -57,17 +57,14 @@ class ArenasModel extends BaseModel
         //? Sort By
         if (isset($filters["sort_by"])) {
             switch (strtolower($filters['sort_by'])) {
-                case 'name':
+                case 'arena_name':
                     $sql .= " ORDER BY arena_name";
-                    break;
-                case 'location':
-                    $sql .= " ORDER BY location";
                     break;
                 case 'capacity':
                     $sql .= " ORDER BY capacity";
                     break;
-                case 'opened_year':
-                    $sql .= " ORDER BY opened_year";
+                case 'year_built':
+                    $sql .= " ORDER BY year_built";
                     break;
             }
         }
@@ -127,12 +124,11 @@ class ArenasModel extends BaseModel
             $filters_values['game_type'] = $filters['game_type'];
         }
 
-        //* Execute Query & Paginate Results
-        $games = $this->paginate($sql, $filters_values);
-
         //* Response Model
+        $arena = $this->getArenaById($arena_id);
+        $games = $this->paginate($sql, $filters_values);
         $result = [
-            "arena_id" => $arena_id,
+            "arena" => $arena,
             "meta" => $games["meta"],
             "games" => $games["data"]
         ];

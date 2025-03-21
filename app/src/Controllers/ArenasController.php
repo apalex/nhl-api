@@ -62,21 +62,26 @@ class ArenasController extends BaseController
             $this->validateArenaName($filters['arena_name'], $request);
         }
 
+        //TODO VALIDATE YEAR BUILT TYPE @DE SOUSA
+
+        //TODO VALIDATE CAPACITY TYPE @DE SOUSA
+
         // Retrieve the list of arenas
         $arenas = $this->arenas_model->getArenas($filters);
 
         // Validate Arena Data
         $this->validateArenaInfo($arenas, $request);
 
-        // Return JSON response
-        return $this->renderJson($response, [
-            "status" => array(
-                "type" => "successful",
-                "code" => 200,
-                "message" => "Team details fetched successfully",
-            ),
-            "team" => $arenas
-        ]);
+        //* Valid HTTP Response Model
+        $status = array(
+            "Type" => "successful",
+            "Code" => 200,
+            "Content-Type" => "application/json",
+            "Message" => "Arenas fetched successfully",
+        );
+        $arenas["status"] = $status;
+        $arenas = array_reverse($arenas);
+        return $this->renderJson($response, $arenas);
     }
 
     /**
@@ -93,25 +98,30 @@ class ArenasController extends BaseController
         $arena_id = $uri_args["arena_id"];
 
         if (!ctype_digit($arena_id)) {
-            throw new HttpInvalidIDException($request, "The provided arena ID is invalid!");
+            throw new HttpInvalidIDException($request, "The provided arena ID is invalid. Expected Format: int|number");
         }
 
         // Retrieve the arena details
-        $arena_info = $this->arenas_model->getArenaByID($arena_id);
+        $arena = $this->arenas_model->getArenaByID($arena_id);
 
         // Validate Arena
-        if (!$arena_info) {
-            throw new HttpNotFoundException($request, "The provided arena ID was not found!");
+        if (!$arena) {
+            throw new HttpNotFoundException($request, "No matching record for arena info found.");
         }
 
-        return $this->renderJson($response, [
-            "status" => array(
-                "type" => "successful",
-                "code" => 200,
-                "message" => "Team details fetched successfully",
-            ),
-            "team" => $arena_info
-        ]);
+        //* Valid HTTP Response Model
+        return $this->renderJson(
+            $response,
+            [
+                "status" => array(
+                    "Type" => "successful",
+                    "Code" => 200,
+                    "Content-Type" => "application/json",
+                    "Message" => "Arena details fetched successfully",
+                ),
+                "arena" => $arena
+            ]
+        );
     }
 
     /**
@@ -122,21 +132,28 @@ class ArenasController extends BaseController
      * @param array $uri_args Route arguments containing team ID.
      * @return Response The JSON response containing related arenas.
      */
-    public function handleArenasByTeamID(Request $request, Response $response, array $uri_args): Response
+    public function handleGetArenaGames(Request $request, Response $response, array $uri_args): Response
     {
-        $team_id = $uri_args['team_id'];
+        $arena_id = $uri_args['arena_id'];
 
         // Validate Team ID
-        if (!ctype_digit($team_id)) {
-            throw new HttpInvalidInputException($request, "Invalid team_id. It must be a numeric value.");
+        if (!ctype_digit($arena_id)) {
+            throw new HttpInvalidInputException($request, "Invalid arena_id. It must be a numeric value.");
         }
 
-        $arenas = $this->arenas_model->getArenas(["team_id" => $team_id]);
+        //TODO VALIDATE TOURNAMENT TYPE @DE SOUSA
+
+        $filters = $request->getQueryParams();
+        $arena_info = $this->arenas_model->getGamesByArenaId($arena_id, $filters);
 
         return $this->renderJson($response, [
-            "status" => "success",
-            "team_id" => $team_id,
-            "arenas" => $arenas
+            "status" => array(
+                "Type" => "successful",
+                "Code" => 200,
+                "Content-Type" => "application/json",
+                "Message" => "Arena games fetched successfully",
+            ),
+            "details" => $arena_info
         ]);
     }
 

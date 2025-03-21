@@ -61,14 +61,16 @@ class TeamsController extends BaseController
         //* Validate Team Info
         $this->validateTeamInfo($teams, $request);
 
-        return $this->renderJson($response, [
-            "status" => array(
-                "type" => "successful",
-                "code" => 200,
-                "message" => "Team's fetched successfully",
-            ),
-            "teams" => $teams
-        ]);
+        //* Valid HTTP Response Model
+        $status = array(
+            "Type" => "successful",
+            "Code" => 200,
+            "Content-Type" => "application/json",
+            "Message" => "Teams fetched successfully",
+        );
+        $teams["status"] = $status;
+        $teams = array_reverse($teams);
+        return $this->renderJson($response, $teams);
     }
 
     /**
@@ -94,14 +96,20 @@ class TeamsController extends BaseController
         //* Validate Team
         $this->validateTeam($team_info, $request);
 
-        return $this->renderJson($response, [
-            "status" => array(
-                "type" => "successful",
-                "code" => 200,
-                "message" => "Team details fetched successfully",
-            ),
-            "team" => $team_info
-        ]);
+        //* Valid HTTP Response Model
+        return $this->renderJson(
+            $response,
+            [
+                "status" => array(
+                    "Type" => "successful",
+                    "Code" => 200,
+                    "Content-Type" => "application/json",
+                    "Message" => "Team details fetched successfully",
+                ),
+                "team" => $team_info
+            ]
+        );
+
     }
 
     /**
@@ -152,11 +160,12 @@ class TeamsController extends BaseController
 
         return $this->renderJson($response, [
             "status" => array(
-                "type" => "successful",
-                "code" => 200,
-                "message" => "Team games fetched successfully",
+                "Type" => "successful",
+                "Code" => 200,
+                "Content-Type" => "application/json",
+                "Message" => "Team games fetched successfully",
             ),
-            "teams" => $team_info
+            "details" => $team_info
         ]);
     }
 
