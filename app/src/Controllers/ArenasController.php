@@ -66,7 +66,7 @@ class ArenasController extends BaseController
         if (isset($filters['sort_by'])) {
             $this->validateSortBy($filters['sort_by'], $request);
         }
-
+        
         // Validate Ordering
         if (isset($filters['order_by'])) {
             $this->validateOrderBy($filters['order_by'], $request);
@@ -105,7 +105,7 @@ class ArenasController extends BaseController
             throw new HttpInvalidInputException($request, "Invalid date format. Expected YYYY-MM-DD HH:MM:SS");
         }
         // Validate game type input
-        $allowedGameTypes = ['deathmatch', 'team battle', 'free for all'];
+       $allowed = ['regular', 'playoffs', 'preseason'];
         $gameType = $request->getParsedBody()['game_type'] ?? null;
         if ($gameType && !in_array($gameType, $allowedGameTypes)) {
             throw new HttpInvalidInputException($request, "Invalid game type.");
@@ -163,9 +163,12 @@ class ArenasController extends BaseController
         $arenas = $this->arenasModel->getArenas(["team_id" => $team_id]);
 
         return $this->renderJson($response, [
-            "status" => "success",
-            "team_id" => $team_id,
-            "arenas" => $arenas
+            "status" => array(
+                "type" => "successful",
+                "code" => 200,
+                "message" => "Team details fetched successfully",
+            ),
+            "team" => $team_info
         ]);
     }
     }
