@@ -36,9 +36,9 @@ class ArenasController extends BaseController
             throw new HttpInvalidInputException($request, "Invalid date format. Expected YYYY-MM-DD HH:MM:SS");
         }
         // Validate game type input
-        $allowedGameTypes = ['deathmatch', 'team battle', 'free for all'];
+        $allowed = ['regular', 'playoffs', 'preseason'];
         $gameType = $request->getParsedBody()['game_type'] ?? null;
-        if ($gameType && !in_array($gameType, $allowedGameTypes)) {
+        if ($gameType && !in_array($gameType, $allowed)) {
             throw new HttpInvalidInputException($request, "Invalid game type.");
         }
 
@@ -66,7 +66,7 @@ class ArenasController extends BaseController
         if (isset($filters['sort_by'])) {
             $this->validateSortBy($filters['sort_by'], $request);
         }
-        
+
         // Validate Ordering
         if (isset($filters['order_by'])) {
             $this->validateOrderBy($filters['order_by'], $request);
@@ -127,8 +127,12 @@ class ArenasController extends BaseController
         }
 
         return $this->renderJson($response, [
-            "status" => "success",
-            "arena" => $arena_info
+            "status" => array(
+                "type" => "successful",
+                "code" => 200,
+                "message" => "Arena details fetched successfully",
+            ),
+            "team" => $arena_info
         ]);
     }
     }
@@ -166,9 +170,9 @@ class ArenasController extends BaseController
             "status" => array(
                 "type" => "successful",
                 "code" => 200,
-                "message" => "Team details fetched successfully",
+                "message" => "Arena details fetched successfully",
             ),
-            "team" => $team_info
+            "team" => $arena_info
         ]);
     }
     }
