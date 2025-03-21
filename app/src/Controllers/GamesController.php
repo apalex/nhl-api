@@ -79,7 +79,17 @@ class GamesController extends BaseController
         $this->validateGameInfo($games, $request);
 
         //? Step 3 - Return the JSON response.
-        return $this->renderJson($response, $games);
+        return $this->renderJson(
+            $response,
+            [
+                "status" => array(
+                    "type" => "successful",
+                    "code" => 200,
+                    "message" => "Games fetched successfully",
+                ),
+                "game" => $games
+            ]
+        );
     }
 
     /**
@@ -115,7 +125,17 @@ class GamesController extends BaseController
         }
 
         //? Step 5 - Return the JSON response.
-        return $this->renderJson($response, $game_info);
+        return $this->renderJson(
+            $response,
+            [
+                "status" => array(
+                    "type" => "successful",
+                    "code" => 200,
+                    "message" => "Game details fetched successfully",
+                ),
+                "game" => $game_info
+            ]
+        );
     }
 
     /**
@@ -172,7 +192,17 @@ class GamesController extends BaseController
         }
 
         //? Step 6 - Return the JSON response.
-        return $this->renderJson($response, $stats);
+        return $this->renderJson(
+            $response,
+            [
+                "status" => array(
+                    "type" => "successful",
+                    "code" => 200,
+                    "message" => "Game stats fetched successfully",
+                ),
+                "games" => $stats
+            ]
+        );
     }
 
     /**
