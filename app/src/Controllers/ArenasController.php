@@ -15,9 +15,9 @@ use Slim\Exception\HttpNotFoundException;
 class ArenasController extends BaseController
 {
     /**
-     * @var ArenasModel $arenas_model The model handling arena data.
+     * @var ArenasModel $arenasModel The model handling arena data.
      */
-    public function __construct(private ArenasModel $arenas_model) {}
+    public function __construct(private ArenasModel $arenasModel) {}
 
     /**
      * Handles requests to retrieve multiple arenas with optional filters.
@@ -41,7 +41,7 @@ class ArenasController extends BaseController
         }
 
         if (isset($filters["page"]) && isset($filters["page_size"])) {
-            $this->arenas_model->setPaginationOptions(
+            $this->arenasModel->setPaginationOptions(
                 $filters["page"],
                 $filters["page_size"]
             );
@@ -63,7 +63,7 @@ class ArenasController extends BaseController
         }
 
         // Retrieve the list of arenas
-        $arenas = $this->arenas_model->getArenas($filters);
+        $arenas = $this->arenasModel->getArenas($filters);
 
         // Validate Arena Data
         $this->validateArenaInfo($arenas, $request);
@@ -93,7 +93,7 @@ class ArenasController extends BaseController
         }
 
         // Retrieve the arena details
-        $arena_info = $this->arenas_model->getArenaByID($arena_id);
+        $arena_info = $this->arenasModel->getArenaByID($arena_id);
 
         // Validate Arena
         if (!$arena_info) {
@@ -123,7 +123,7 @@ class ArenasController extends BaseController
             throw new HttpInvalidInputException($request, "Invalid team_id. It must be a numeric value.");
         }
 
-        $arenas = $this->arenas_model->getArenas(["team_id" => $team_id]);
+        $arenas = $this->arenasModel->getArenas(["team_id" => $team_id]);
 
         return $this->renderJson($response, [
             "status" => "success",
