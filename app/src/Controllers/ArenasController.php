@@ -62,10 +62,14 @@ class ArenasController extends BaseController
             $this->validateArenaName($filters['arena_name'], $request);
         }
 
-        //TODO VALIDATE YEAR BUILT TYPE @DE SOUSA
-
-        //TODO VALIDATE CAPACITY TYPE @DE SOUSA
-
+        // Validate Year Built
+        if (isset($filters['year_built'])) {
+            $this->validateArenaName($filters['year_built'], $request);
+        }
+        // Validate Arena Capacity
+        if (isset($filters['capacity'])) {
+            $this->validateArenaName($filters['capacity'], $request);
+        }
         // Retrieve the list of arenas
         $arenas = $this->arenas_model->getArenas($filters);
 
