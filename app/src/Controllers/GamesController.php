@@ -27,7 +27,8 @@ class GamesController extends BaseController
      * @return Response The JSON response containing game data.
      */
     public function handleGetGames(Request $request, Response $response): Response
-    {
+    {   // Validate HTTP Method Sent
+        $this->validateHTTPMethod($request);
         //? Step 1 - Extract the list of filters.
         $filters = $request->getQueryParams();
 
@@ -102,6 +103,10 @@ class GamesController extends BaseController
      */
     public function handleGetGameByID(Request $request, Response $response, array $uri_args): Response
     {
+
+        //? Validate HTTP Method Sent
+        $this->validateHTTPMethod($request);
+
         //? Step 1 - Retrieve the game ID from the request.
         $game_id = $uri_args["game_id"];
 
@@ -114,7 +119,7 @@ class GamesController extends BaseController
         //? Step 3 - Retrieve the game details.
         $game_info = $this->games_model->getGamesById($game_id);
 
-        // Validate Game
+        //? Validate Game
         $this->validateGame($game_info, $request);
 
         //? Step 4 - Handle Errors
@@ -149,6 +154,9 @@ class GamesController extends BaseController
      */
     public function handleGetGameStats(Request $request, Response $response, array $uri_args): Response
     {
+        //? Validate HTTP Method Sent
+        $this->validateHTTPMethod($request);
+
         //? Step 1 - Retrieve the game ID from the request.
         $game_id = $uri_args["game_id"];
 
@@ -162,13 +170,13 @@ class GamesController extends BaseController
         $filters = $request->getQueryParams();
         $this->validateFilters($filters, $request);
 
-        // Check if page parameter is a number
+        //? Check if page parameter is a number
         if (isset($filters['page']) && !is_numeric($filters['page'])) {
             //! provided page invalid
             throw new HttpInvalidInputException($request, "The 'page' parameter must be a valid number.");
         }
 
-        // Check if page_size parameter is a number
+        //? Check if page_size parameter is a number
         if (isset($filters['page_size']) && !is_numeric($filters['page_size'])) {
             //! provided page size invalid
             throw new HttpInvalidInputException($request, "The 'page_size' parameter must be a valid number.");

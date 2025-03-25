@@ -36,6 +36,9 @@ class TeamsController extends BaseController
      */
     public function handleGetTeams(Request $request, Response $response, array $uri_args): Response
     {
+        // Validate HTTP Method Sent
+        $this->validateHTTPMethod($request);
+
         $filters = $request->getQueryParams();
 
         //* Validate Pagination
@@ -86,6 +89,9 @@ class TeamsController extends BaseController
      */
     public function handleGetTeamByID(Request $request, Response $response, array $uri_args): Response
     {
+        // Validate HTTP Method Sent
+        $this->validateHTTPMethod($request);
+
         $team_id = $uri_args['team_id'];
 
         //* Validate Team ID
@@ -125,6 +131,9 @@ class TeamsController extends BaseController
      */
     public function handleGetTeamGames(Request $request, Response $response, array $uri_args): Response
     {
+        // Validate HTTP Method Sent
+        $this->validateHTTPMethod($request);
+
         $team_id = $uri_args['team_id'];
 
         //* Validate Team ID

@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Exceptions\HttpInvalidIDException;
 use App\Exceptions\HttpInvalidInputException;
+use App\Exceptions\HttpInvalidMethodException;
 use App\Models\ArenasModel;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -28,6 +29,9 @@ class ArenasController extends BaseController
      */
     public function handleGetArenas(Request $request, Response $response): Response
     {
+        // Validate HTTP Method Sent
+        $this->validateHTTPMethod($request);
+
         // Extract query parameters (filters)
         $filters = $request->getQueryParams();
 
@@ -85,6 +89,7 @@ class ArenasController extends BaseController
         );
         $arenas["status"] = $status;
         $arenas = array_reverse($arenas);
+
         return $this->renderJson($response, $arenas);
     }
 
@@ -98,6 +103,9 @@ class ArenasController extends BaseController
      */
     public function  handleGetArenaByID(Request $request, Response $response, array $uri_args): Response
     {
+        // Validate HTTP Method Sent
+        $this->validateHTTPMethod($request);
+
         // Extract and validate arena_id
         $arena_id = $uri_args["arena_id"];
 
@@ -138,19 +146,26 @@ class ArenasController extends BaseController
      */
     public function handleGetArenaGames(Request $request, Response $response, array $uri_args): Response
     {
+
+        // Validate HTTP Method Sent
+        $this->validateHTTPMethod($request);
+
         $arena_id = $uri_args['arena_id'];
+
         $filters = $request->getQueryParams();
+
         // Validate Arena ID
         if (!ctype_digit($arena_id)) {
             throw new HttpInvalidInputException($request, "Invalid arena_id. It must be a numeric value.");
         }
+
         //Validate Game Type
         if (isset($filters['game_type'])) {
             $game_type = $filters['game_type'];
             $this->validateGameType($game_type, $request);
         }
 
-        $filters = $request->getQueryParams();
+
         $arena_info = $this->arenas_model->getGamesByArenaId($arena_id, $filters);
 
         return $this->renderJson($response, [
@@ -185,6 +200,7 @@ class ArenasController extends BaseController
      */
     private function validateGameType(mixed $game_type, Request $request)
     {
+
         $allowed = ['regular', 'playoffs', 'preseason'];
 
         if (!in_array($game_type, $allowed)) {
