@@ -139,13 +139,16 @@ class ArenasController extends BaseController
     public function handleGetArenaGames(Request $request, Response $response, array $uri_args): Response
     {
         $arena_id = $uri_args['arena_id'];
-
-        // Validate Team ID
+        $filters = $request->getQueryParams();
+        // Validate Arena ID
         if (!ctype_digit($arena_id)) {
             throw new HttpInvalidInputException($request, "Invalid arena_id. It must be a numeric value.");
         }
-
-        //TODO VALIDATE TOURNAMENT TYPE @DE SOUSA
+        //Validate Game Type
+        if (isset($filters['game_type'])) {
+            $game_type = $filters['game_type'];
+            $this->validateGameType($game_type, $request);
+        }
 
         $filters = $request->getQueryParams();
         $arena_info = $this->arenas_model->getGamesByArenaId($arena_id, $filters);
@@ -169,6 +172,24 @@ class ArenasController extends BaseController
         $allowedFields = ['arena_name', 'capacity', 'year_built'];
         if (!in_array($sortBy, $allowedFields)) {
             throw new HttpInvalidInputException($request, "Invalid sort_by parameter. Allowed: " . implode(", ", $allowedFields));
+        }
+    }
+
+    /**
+     * Validates the game type format.
+     *
+     * @param string $game_type The game type to validate.
+     * @param Request $request The HTTP request.
+     *
+     * @throws HttpInvalidInputException If the game type is not valid.
+     */
+    private function validateGameType(mixed $game_type, Request $request)
+    {
+        $allowed = ['regular', 'playoffs', 'preseason'];
+
+        if (!in_array($game_type, $allowed)) {
+            //! provided sort filter invalid
+            throw new HttpInvalidInputException($request, "The provided game type is invalid. Expected input: ['regular', 'playoffs', 'preseason']");
         }
     }
 
