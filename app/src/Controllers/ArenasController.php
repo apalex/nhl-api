@@ -173,7 +173,7 @@ class ArenasController extends BaseController
     /**
      * Validates the sorting parameter.
      *
-     * @param string $sortBy Sorts the allowed feilds
+     * @param string $sortBy Sorts the allowed fields
      * @param Request $request The HTTP request.
      */
     private function validateSortBy(string $sortBy, Request $request)
@@ -199,6 +199,25 @@ class ArenasController extends BaseController
             throw new HttpInvalidInputException($request, "Invalid order_by parameter. Allowed: ASC, DESC");
         }
     }
+
+    /**
+    * Validates the game type format.
+    *
+    * @param string $game_type The game type to validate.
+    * @param Request $request The HTTP request.
+    *
+    * @throws HttpInvalidInputException If the game type is not valid.
+    */
+     private function validateGameType(mixed $game_type, Request $request)
+     {
+
+         $allowed = ['regular', 'playoffs', 'preseason'];
+
+         if (!in_array($game_type, $allowed)) {
+             //! provided sort filter invalid
+             throw new HttpInvalidInputException($request, "The provided game type is invalid. Expected input: ['regular', 'playoffs', 'preseason']");
+         }
+     }
 
     /**
      * Validates the arena name format.
@@ -229,7 +248,7 @@ class ArenasController extends BaseController
             throw new HttpInvalidInputException($request, "No matching record for arenas found.");
         }
     }
-   
+
 
     /**
      * Validates the provided pagination details.
