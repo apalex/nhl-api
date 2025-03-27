@@ -32,24 +32,8 @@ class GamesController extends BaseController
         //? Step 1 - Extract the list of filters.
         $filters = $request->getQueryParams();
 
-        // Check if page parameter is a number
-        if (isset($filters['page']) && !is_numeric($filters['page'])) {
-            //! provided page invalid
-            throw new HttpInvalidInputException($request, "The 'page' parameter must be a valid number.");
-        }
-
-        // Check if page_size parameter is a number
-        if (isset($filters['page_size']) && !is_numeric($filters['page_size'])) {
-            //! provided page size invalid
-            throw new HttpInvalidInputException($request, "The 'page_size' parameter must be a valid number.");
-        }
-
-        if (isset($filters["page"]) && isset($filters["page_size"])) {
-            $this->games_model->setPaginationOptions(
-                $filters["page"],
-                $filters["page_size"]
-            );
-        }
+        //* Validate Pagination
+        $this->validatePagination($request);
 
         // Validate Sort By
         if (isset($filters['sort_by'])) {
@@ -170,24 +154,8 @@ class GamesController extends BaseController
         $filters = $request->getQueryParams();
         $this->validateFilters($filters, $request);
 
-        //? Check if page parameter is a number
-        if (isset($filters['page']) && !is_numeric($filters['page'])) {
-            //! provided page invalid
-            throw new HttpInvalidInputException($request, "The 'page' parameter must be a valid number.");
-        }
-
-        //? Check if page_size parameter is a number
-        if (isset($filters['page_size']) && !is_numeric($filters['page_size'])) {
-            //! provided page size invalid
-            throw new HttpInvalidInputException($request, "The 'page_size' parameter must be a valid number.");
-        }
-
-        if (isset($filters["page"]) && isset($filters["page_size"])) {
-            $this->games_model->setPaginationOptions(
-                $filters["page"],
-                $filters["page_size"]
-            );
-        }
+        //* Validate Pagination
+        $this->validatePagination($request);
 
         //? Step 4 - Retrieve stats from the model.
         $stats = $this->games_model->getStatsByGameId($game_id, $filters);
@@ -351,5 +319,48 @@ class GamesController extends BaseController
         if (isset($filters['sog']) && (!is_numeric($filters['sog']) || $filters['sog'] < 0)) {
             throw new HttpInvalidInputException($request, "Invalid SOG value. Expected a non-negative integer.");
         }
+    }
+
+    /**
+     * Validates the provided pagination details.
+     *
+     * @param Request $request The request object for error handling.
+     *
+     * @throws HttpInvalidInputException If the pagination is not valid.
+     */
+    private function validatePagination(Request $request)
+    {
+        $filters = $request->getQueryParams();
+
+        // Check if page parameter is a number
+        if (isset($filters['page']) && !is_numeric($filters['page'])) {
+            //! provided page invalid
+            throw new HttpInvalidInputException($request, "The 'page' parameter must be a valid number.");
+        }
+
+        // Check if page_size parameter is a number
+        if (isset($filters['page_size']) && !is_numeric($filters['page_size'])) {
+            //! provided page size invalid
+            throw new HttpInvalidInputException($request, "The 'page_size' parameter must be a valid number.");
+        }
+
+        // Check if page parameter is greater than zero
+        if (isset($filters['page']) && $filters['page'] < 1) {
+            //! provided page must be greater than zero
+            throw new HttpInvalidInputException($request, "The 'page' parameter must be greater than zero or must be present in the URI.");
+        }
+
+        // Check if page_size parameter is greater than zero
+        if (isset($filters['page_size']) && $filters['page_size'] < 1) {
+            //! provided page_size number must be greater than zero
+            throw new HttpInvalidInputException($request, "The 'page_size' parameter must be greater than zero or must be present in the URI.");
+        }
+
+        // Check if page and page_size parameters are present inside URI
+        if (isset($filters['page']) && isset($filters['page_size'])) {
+            $this->games_model->setPaginationOptions($filters['page'], $filters['page_size']);
+        }
+
+        // Check if page or page_size is bigger than current amount in database
     }
 }
