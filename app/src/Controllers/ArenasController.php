@@ -172,6 +172,9 @@ class ArenasController extends BaseController
 
     /**
      * Validates the sorting parameter.
+     *
+     * @param string $sortBy Sorts the allowed feilds
+     * @param Request $request The HTTP request.
      */
     private function validateSortBy(string $sortBy, Request $request)
     {
@@ -181,27 +184,13 @@ class ArenasController extends BaseController
         }
     }
 
-    /**
-     * Validates the game type format.
+     /**
+     * Validates the order parameter.
      *
-     * @param string $game_type The game type to validate.
+     * @param string $orderBy The sorting order to validate.
      * @param Request $request The HTTP request.
      *
-     * @throws HttpInvalidInputException If the game type is not valid.
-     */
-    private function validateGameType(mixed $game_type, Request $request)
-    {
-
-        $allowed = ['regular', 'playoffs', 'preseason'];
-
-        if (!in_array($game_type, $allowed)) {
-            //! provided sort filter invalid
-            throw new HttpInvalidInputException($request, "The provided game type is invalid. Expected input: ['regular', 'playoffs', 'preseason']");
-        }
-    }
-
-    /**
-     * Validates the order parameter.
+     * @throws HttpInvalidInputException If the order parameter is not valid.
      */
     private function validateOrderBy(string $orderBy, Request $request)
     {
@@ -213,6 +202,11 @@ class ArenasController extends BaseController
 
     /**
      * Validates the arena name format.
+     *
+     * @param string $arenaName The arena name to validate.
+     * @param Request $request The HTTP request.
+     *
+     * @throws HttpInvalidInputException If the arena name contains invalid characters or is empty.
      */
     private function validateArenaName(string $arenaName, Request $request)
     {
@@ -223,13 +217,19 @@ class ArenasController extends BaseController
 
     /**
      * Validates if arena data is available.
+     *
+     * @param array $arenas The array containing arena data.
+     * @param Request $request The HTTP request.
+     *
+     * @throws HttpInvalidInputException If no matching arena records are found.
      */
-    private function validateArenaInfo($arenas, Request $request)
+    private function validateArenaInfo(array $arenas, Request $request)
     {
         if (count($arenas['data']) <= 0) {
             throw new HttpInvalidInputException($request, "No matching record for arenas found.");
         }
     }
+   
 
     /**
      * Validates the provided pagination details.
