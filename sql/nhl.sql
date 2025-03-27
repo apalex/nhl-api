@@ -42,7 +42,7 @@ CREATE TABLE `arenas` (
 --
 
 INSERT INTO `arenas` (`arena_id`, `arena_name`, `year_built`, `capacity`, `city`, `province`, `team_id`) VALUES
-(1, 'Scotiabank Arena', 1999, 19800, 'Tornto', 'Ontario', 1),
+(1, 'Scotiabank Arena', 1999, 19800, 'Toronto', 'Ontario', 1),
 (2, 'Bell Centre', 1996, 21273, 'Montreal', 'Quebec', 2),
 (3, 'TD Garden', 1995, 19700, 'Boston', 'Massachusetts', 3),
 (4, 'United Center', 1994, 23500, 'Chicago', 'Illinois', 4),

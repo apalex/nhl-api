@@ -36,7 +36,7 @@ class TeamsController extends BaseController
      */
     public function handleGetTeams(Request $request, Response $response, array $uri_args): Response
     {
-        // Validate HTTP Method Sent
+        //* Validate HTTP Method Sent
         $this->validateHTTPMethod($request);
 
         $filters = $request->getQueryParams();
@@ -89,7 +89,7 @@ class TeamsController extends BaseController
      */
     public function handleGetTeamByID(Request $request, Response $response, array $uri_args): Response
     {
-        // Validate HTTP Method Sent
+        //* Validate HTTP Method Sent
         $this->validateHTTPMethod($request);
 
         $team_id = $uri_args['team_id'];
@@ -115,7 +115,6 @@ class TeamsController extends BaseController
                 "team" => $team_info
             ]
         );
-
     }
 
     /**
@@ -131,7 +130,7 @@ class TeamsController extends BaseController
      */
     public function handleGetTeamGames(Request $request, Response $response, array $uri_args): Response
     {
-        // Validate HTTP Method Sent
+        //* Validate HTTP Method Sent
         $this->validateHTTPMethod($request);
 
         $team_id = $uri_args['team_id'];
@@ -305,10 +304,24 @@ class TeamsController extends BaseController
             throw new HttpInvalidInputException($request, "The 'page_size' parameter must be a valid number.");
         }
 
+        // Check if page parameter is greater than zero
+        if (isset($filters['page']) && $filters['page'] < 1) {
+            //! provided page must be greater than zero
+            throw new HttpInvalidInputException($request, "The 'page' parameter must be greater than zero or must be present in the URI.");
+        }
+
+        // Check if page_size parameter is greater than zero
+        if (isset($filters['page_size']) && $filters['page_size'] < 1) {
+            //! provided page_size number must be greater than zero
+            throw new HttpInvalidInputException($request, "The 'page_size' parameter must be greater than zero or must be present in the URI.");
+        }
+
         // Check if page and page_size parameters are present inside URI
         if (isset($filters['page']) && isset($filters['page_size'])) {
             $this->teamsModel->setPaginationOptions($filters['page'], $filters['page_size']);
         }
+
+        // Check if page or page_size is bigger than current amount in database
     }
 
     /**

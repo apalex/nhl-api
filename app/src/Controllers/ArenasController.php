@@ -4,7 +4,6 @@ namespace App\Controllers;
 
 use App\Exceptions\HttpInvalidIDException;
 use App\Exceptions\HttpInvalidInputException;
-use App\Exceptions\HttpInvalidMethodException;
 use App\Models\ArenasModel;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -35,21 +34,8 @@ class ArenasController extends BaseController
         // Extract query parameters (filters)
         $filters = $request->getQueryParams();
 
-        // Validate Pagination
-        if (isset($filters['page']) && !is_numeric($filters['page'])) {
-            throw new HttpInvalidInputException($request, "The 'page' parameter must be a valid number.");
-        }
-
-        if (isset($filters['page_size']) && !is_numeric($filters['page_size'])) {
-            throw new HttpInvalidInputException($request, "The 'page_size' parameter must be a valid number.");
-        }
-
-        if (isset($filters["page"]) && isset($filters["page_size"])) {
-            $this->arenas_model->setPaginationOptions(
-                $filters["page"],
-                $filters["page_size"]
-            );
-        }
+        //* Validate Pagination
+        $this->validatePagination($request);
 
         // Validate Sorting
         if (isset($filters['sort_by'])) {
@@ -154,6 +140,9 @@ class ArenasController extends BaseController
 
         $filters = $request->getQueryParams();
 
+        //* Validate Pagination
+        $this->validatePagination($request);
+
         // Validate Arena ID
         if (!ctype_digit($arena_id)) {
             throw new HttpInvalidInputException($request, "Invalid arena_id. It must be a numeric value.");
@@ -165,8 +154,10 @@ class ArenasController extends BaseController
             $this->validateGameType($game_type, $request);
         }
 
-
         $arena_info = $this->arenas_model->getGamesByArenaId($arena_id, $filters);
+
+        //* Call Validate Player Info
+        $this->validateArenaGame($arena_info, $request);
 
         return $this->renderJson($response, [
             "status" => array(
@@ -237,6 +228,65 @@ class ArenasController extends BaseController
     {
         if (count($arenas['data']) <= 0) {
             throw new HttpInvalidInputException($request, "No matching record for arenas found.");
+        }
+    }
+
+    /**
+     * Validates the provided pagination details.
+     *
+     * @param Request $request The request object for error handling.
+     *
+     * @throws HttpInvalidInputException If the pagination is not valid.
+     */
+    private function validatePagination(Request $request)
+    {
+        $filters = $request->getQueryParams();
+
+        // Check if page parameter is a number
+        if (isset($filters['page']) && !is_numeric($filters['page'])) {
+            //! provided page invalid
+            throw new HttpInvalidInputException($request, "The 'page' parameter must be a valid number.");
+        }
+
+        // Check if page_size parameter is a number
+        if (isset($filters['page_size']) && !is_numeric($filters['page_size'])) {
+            //! provided page size invalid
+            throw new HttpInvalidInputException($request, "The 'page_size' parameter must be a valid number.");
+        }
+
+        // Check if page parameter is greater than zero
+        if (isset($filters['page']) && $filters['page'] < 1) {
+            //! provided page must be greater than zero
+            throw new HttpInvalidInputException($request, "The 'page' parameter must be greater than zero or must be present in the URI.");
+        }
+
+        // Check if page_size parameter is greater than zero
+        if (isset($filters['page_size']) && $filters['page_size'] < 1) {
+            //! provided page_size number must be greater than zero
+            throw new HttpInvalidInputException($request, "The 'page_size' parameter must be greater than zero or must be present in the URI.");
+        }
+
+        // Check if page and page_size parameters are present inside URI
+        if (isset($filters['page']) && isset($filters['page_size'])) {
+            $this->arenas_model->setPaginationOptions($filters['page'], $filters['page_size']);
+        }
+
+        // Check if page or page_size is bigger than current amount in database
+    }
+
+    /**
+     * Validates if arena game information is available.
+     *
+     * @param mixed $arena_info The arena game information to validate.
+     * @param Request $request The HTTP request.
+     *
+     * @throws HttpInvalidInputException If no arena game record is found.
+     */
+    private function validateArenaGame($arena_info, Request $request)
+    {
+        if (count($arena_info['games']) <= 0) {
+            //! no matching record in the db
+            throw new HttpInvalidInputException($request, "No matching record for arena games found.");
         }
     }
 }
