@@ -62,4 +62,7 @@ return static function (Slim\App $app): void {
     $app->get('/error', function (Request $request, Response $response, $args) {
         throw new \Slim\Exception\HttpNotFoundException($request, "Something went wrong");
     });
+
+    //* ROUTE: POST
+    $app->post('/teams', [TeamsController::class, 'handlePostTeams']);
 };

@@ -153,4 +153,11 @@ class TeamsModel extends BaseModel
 
         return $result;
     }
+
+    function insertTeam(array $new_team) : mixed {
+
+        $last_id = $this->insert("teams", $new_team);
+
+        return 1;
+    }
 }

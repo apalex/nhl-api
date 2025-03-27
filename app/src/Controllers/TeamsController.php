@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Core\AppSettings;
 use App\Exceptions\HttpInvalidIDException;
 use App\Exceptions\HttpInvalidInputException;
+use App\Services\TeamsService;
 use App\Models\TeamsModel;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -22,7 +23,27 @@ class TeamsController extends BaseController
      *
      * @param TeamsModel $teamsModel The teams model instance.
      */
-    public function __construct(private TeamsModel $teamsModel) {}
+    public function __construct(private TeamsModel $teamsModel, private TeamsService $teamsService) {}
+
+    //* ROUTE: POST /teams
+    public function handlePostTeams(Request $request, Response $response, array $uri_args): Response
+    {
+        $team_info = $request->getParsedBody();
+        $result = $this->teamsService->createTeams($team_info);
+
+
+
+        //! Verify the outcome of the operation
+        if ($result->isSuccess()) {
+            $payload = [
+                'status' => "success",
+                'code' => 201,
+                'message' => $result->getData(),
+            ];
+            return $this->renderJson($response, $payload, 201);
+        }
+        return $response;
+    }
 
     /**
      * Handles retrieving a list of teams with optional filtering, sorting, and pagination.
@@ -292,17 +313,18 @@ class TeamsController extends BaseController
     {
         $filters = $request->getQueryParams();
 
-        // Check if page is present in URI
-        if (!isset($filters['page'])) {
-            //! page must be present in the URI
-            throw new HttpInvalidInputException($request, "The 'page' parameter must be present in the URI.");
-        }
+        // @ALEX FIX THIS
+        // Check if page or page_size is present in URI
+        // if (isset($filters['page']) || isset($filters['page_size'])) {
+        //     //! page must be present in the URI
+        //     throw new HttpInvalidInputException($request, "The 'page' parameter must be present in the URI.");
+        // }
 
         // Check if page_size is present in URI
-        if (!isset($filters['page_size'])) {
-            //! page_size must be present in the URI
-            throw new HttpInvalidInputException($request, "The 'page_size' parameter must be present in the URI.");
-        }
+        // if (!isset($filters['page_size'])) {
+        //     //! page_size must be present in the URI
+        //     throw new HttpInvalidInputException($request, "The 'page_size' parameter must be present in the URI.");
+        // }
 
         // Check if page parameter is a number
         if (isset($filters['page']) && !is_numeric($filters['page'])) {
@@ -329,7 +351,9 @@ class TeamsController extends BaseController
         }
 
         // Check if page and page_size parameters are present inside URI
-        $this->teamsModel->setPaginationOptions($filters['page'], $filters['page_size']);
+        if (isset($filters['page']) && isset($filters['page_size'])) {
+            $this->teamsModel->setPaginationOptions($filters['page'], $filters['page_size']);
+        }
 
         // Check if page or page_size is bigger than current amount in database
     }
