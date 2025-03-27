@@ -242,6 +242,18 @@ class ArenasController extends BaseController
     {
         $filters = $request->getQueryParams();
 
+        // Check if page is present in URI
+        if (!isset($filters['page'])) {
+            //! page must be present in the URI
+            throw new HttpInvalidInputException($request, "The 'page' parameter must be present in the URI.");
+        }
+
+        // Check if page_size is present in URI
+        if (!isset($filters['page_size'])) {
+            //! page_size must be present in the URI
+            throw new HttpInvalidInputException($request, "The 'page_size' parameter must be present in the URI.");
+        }
+
         // Check if page parameter is a number
         if (isset($filters['page']) && !is_numeric($filters['page'])) {
             //! provided page invalid
