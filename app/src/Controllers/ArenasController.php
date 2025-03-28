@@ -261,16 +261,16 @@ class ArenasController extends BaseController
     {
         $filters = $request->getQueryParams();
 
-        // Check if page is present in URI
-        if (!isset($filters['page'])) {
-            //! page must be present in the URI
-            throw new HttpInvalidInputException($request, "The 'page' parameter must be present in the URI.");
-        }
-
-        // Check if page_size is present in URI
-        if (!isset($filters['page_size'])) {
-            //! page_size must be present in the URI
-            throw new HttpInvalidInputException($request, "The 'page_size' parameter must be present in the URI.");
+        // Check if page or page_size is present in URI
+        if (isset($filters['page']) || isset($filters['page_size'])) {
+            if (!isset($filters['page'])) {
+                //! page must be present in the URI
+                throw new HttpInvalidInputException($request, "The 'page' parameter must be present in the URI.");
+            }
+            if (!isset($filters['page_size'])) {
+                //! page_size must be present in the URI
+                throw new HttpInvalidInputException($request, "The 'page_size' parameter must be present in the URI.");
+            }
         }
 
         // Check if page parameter is a number
@@ -288,7 +288,7 @@ class ArenasController extends BaseController
         // Check if page parameter is greater than zero
         if (isset($filters['page']) && $filters['page'] < 1) {
             //! provided page must be greater than zero
-            throw new HttpInvalidInputException($request, "The 'page' parameter must be greater than zero or must be present in the URI.");
+            throw new HttpInvalidInputException($request, "The 'page' parameter must be greater than zero.");
         }
 
         // Check if page_size parameter is greater than zero
