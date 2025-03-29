@@ -9,7 +9,7 @@ class TeamsService
 {
     public function __construct(private TeamsModel $teamsModel) {}
 
-    function createTeams(array $newTeamsData) : Result
+    function createTeams(array $newTeamsData, string $message = "Team was successfully inserted into database!") : Result
     {
         //? Validate Received Data
 
@@ -17,6 +17,6 @@ class TeamsService
         $lastInstertedID = $this->teamsModel->insertTeam($newTeamsData[0]);
 
         // Return a successful result
-        return Result::success(" Success Msg ", $lastInstertedID);
+        return Result::success($message, $lastInstertedID);
     }
 }

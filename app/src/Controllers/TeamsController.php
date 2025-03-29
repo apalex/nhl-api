@@ -22,28 +22,49 @@ class TeamsController extends BaseController
      * TeamsController constructor
      *
      * @param TeamsModel $teamsModel The teams model instance.
+     * @param TeamsService $teamsService The teams service instance.
      */
     public function __construct(private TeamsModel $teamsModel, private TeamsService $teamsService) {}
 
     //* ROUTE: POST /teams
-    public function handlePostTeams(Request $request, Response $response, array $uri_args): Response
+
+    /**
+     * Handles inserting a list of teams into database.
+     *
+     * @param Request $request The incoming HTTP request.
+     * @param Response $response The outgoing HTTP response.
+     *
+     * @throws HttpInvalidInputException If query parameters `page` or `page_size` are not numeric.
+     *
+     * @return Response JSON response containing HTTP response to the request.
+     */
+    public function handlePostTeams(Request $request, Response $response): Response
     {
         $team_info = $request->getParsedBody();
+
         $result = $this->teamsService->createTeams($team_info);
 
-
-
         //! Verify the outcome of the operation
+
+        //* Valid HTTP Response Message Structure
         if ($result->isSuccess()) {
+            $status = [
+                "Type" => "successful",
+                'Code' => 201,
+                "Content-Type" => "application/json",
+                'Message' => $result->getMessage(),
+            ];
             $payload = [
-                'status' => "success",
-                'code' => 201,
-                'message' => $result->getData(),
+                "status" => $status,
+                "team" => $team_info
             ];
             return $this->renderJson($response, $payload, 201);
         }
         return $response;
     }
+
+
+    //* ROUTE: GET /teams
 
     /**
      * Handles retrieving a list of teams with optional filtering, sorting, and pagination.
