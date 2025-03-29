@@ -154,10 +154,17 @@ class TeamsModel extends BaseModel
         return $result;
     }
 
+    /**
+     * Insert a new team inside the database.
+     *
+     * @param array $new_team New team to be inserted.
+     *
+     * @return mixed TBD.
+     */
     function insertTeam(array $new_team) : mixed {
 
         $last_id = $this->insert("teams", $new_team);
 
-        return 1;
+        return $last_id;
     }
 }

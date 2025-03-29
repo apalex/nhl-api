@@ -64,5 +64,5 @@ return static function (Slim\App $app): void {
     });
 
     //* ROUTE: POST
-    $app->post('/teams', [TeamsController::class, 'handlePostTeams']);
+    $app->post('/teams', [TeamsController::class, 'handlePostTeam']);
 };

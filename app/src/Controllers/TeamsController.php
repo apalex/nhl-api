@@ -29,7 +29,7 @@ class TeamsController extends BaseController
     //* ROUTE: POST /teams
 
     /**
-     * Handles inserting a list of teams into database.
+     * Handles inserting a team into database.
      *
      * @param Request $request The incoming HTTP request.
      * @param Response $response The outgoing HTTP response.
@@ -38,11 +38,11 @@ class TeamsController extends BaseController
      *
      * @return Response JSON response containing HTTP response to the request.
      */
-    public function handlePostTeams(Request $request, Response $response): Response
+    public function handlePostTeam(Request $request, Response $response): Response
     {
         $team_info = $request->getParsedBody();
 
-        $result = $this->teamsService->createTeams($team_info);
+        $result = $this->teamsService->createTeam($team_info);
 
         //! Verify the outcome of the operation
 
@@ -52,7 +52,7 @@ class TeamsController extends BaseController
                 "Type" => "successful",
                 'Code' => 201,
                 "Content-Type" => "application/json",
-                'Message' => $result->getMessage(),
+                'Message' => $result->getMessage()
             ];
             $payload = [
                 "status" => $status,
