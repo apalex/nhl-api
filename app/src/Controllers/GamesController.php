@@ -170,8 +170,9 @@ class GamesController extends BaseController
                 "Code" => 200,
                 "Content-Type" => "application/json",
                 "Message" => $result->getMessage(),
-            ]
-        ]);
+            ],
+            "data" => $result->getData()
+        ], 200);
     }
 
     /**
