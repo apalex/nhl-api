@@ -138,7 +138,7 @@ class GamesController extends BaseController
      */
     public function handleDeleteGame(Request $request, Response $response, array $uri_args): Response
     {
-        $this->validateHTTPMethod($request);
+        $this->validateHTTPMethod($request, ["DELETE"]);
 
         //? Step 1 - Retrieve and validate game ID
         $game_id  = $uri_args["game_id"] ?? null;
@@ -148,15 +148,19 @@ class GamesController extends BaseController
 
         //? Step 3 - Make valid http error response
         if (!$result->isSuccess()) {
+
+            $message = $result->getMessage();
+            $code = str_contains(strtolower($message), 'not found') ? 404 : 400;
+
             return $this->renderJson($response, [
                 "status" => [
                     "Type" => "error",
-                    "Code" => 400,
+                    "Code" => $code,
                     "Content-Type" => "application/json",
-                    "Message" => $result->getMessage(),
+                    "Message" => $message,
                     "Errors" => $result->getErrors(),
                 ]
-            ], 400);
+            ], $code);
         }
 
         //? Step 4 - Return response
