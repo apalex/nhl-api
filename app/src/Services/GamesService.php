@@ -18,17 +18,19 @@ class GamesService
      */
     public function deleteGame(string $game_id): Result
     {
+        $game_id = (string) $game_id;
+        $data = ["game_id" => $game_id];
+
         //? Rules!
         $rules = [
             "game_id" => [
                 'required',
-                'integer',
-                ['min', 1]
+                ['regex', '/^\d+$/'],
+                ['min', '1']
             ]
         ];
 
         //? Input Validation
-        $data = ["game_id" => $game_id];
         $validator = new Validator($data, [], 'en');
         $validator->mapFieldsRules($rules);
 
@@ -39,7 +41,10 @@ class GamesService
         //? Check if game exists
         $game = $this->games_model->getGamesById($game_id);
         if (empty($game)) {
-            return Result::failure("Game that has the ID $game_id is not found!");
+            return Result::failure(
+                "Game that has the ID $game_id is not found!",
+                ["game_id" => ["Game ID $game_id does not exist in the database!"]]
+            );
         }
 
         //? Delete
