@@ -146,4 +146,15 @@ class GamesModel extends BaseModel
 
         return $result;
     }
+
+    /**
+     * Deletes a game by its ID.
+     *
+     * @param string $game_id The ID of the game to delete.
+     * @return void
+     */
+    public function deleteGameById(string $game_id): void
+    {
+        $this->delete("games", ["game_id" => $game_id]);
+    }
 }
