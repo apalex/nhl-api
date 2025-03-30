@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 namespace App\Controllers;
+
 use App\Exceptions\HttpInvalidMethodException;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Message\ResponseInterface as Response;
@@ -28,10 +29,12 @@ abstract class BaseController
      *
      * @throws HttpInvalidMethodException If the HTTP method is not allowed.
      */
-    protected function validateHTTPMethod($request){
+    protected function validateHTTPMethod($request, array $allowedMethods = ["GET"])
+    {
         $method = $request->getMethod();
-        if ($method != "GET") {
-            throw new HttpInvalidMethodException($request, "Invalid Method. This Method is not allowed.");
+
+        if (!in_array($method, $allowedMethods)) {
+            throw new HttpInvalidMethodException($request, "Invalid Method! Allowed methods: " . implode(", ", $allowedMethods));
         }
     }
 }
