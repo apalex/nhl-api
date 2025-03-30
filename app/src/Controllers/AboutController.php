@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use Psr\Http\Message\ResponseInterface as Response;
+use Psr\Http\Message\RequestInterface as Request;
 
 /**
  * Controller for handling the API root resource and metadata information.
@@ -23,7 +24,7 @@ class AboutController extends BaseController
      * @param Response $response The HTTP response to be returned.
      * @return Response The JSON response containing metadata.
      */
-    public function handleAboutWebService(Response $response): Response
+    public function handleAboutWebService(Request $request, Response $response): Response
     {
         $data = array(
             'api' => self::API_NAME,
