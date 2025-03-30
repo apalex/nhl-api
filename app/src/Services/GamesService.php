@@ -51,6 +51,6 @@ class GamesService
         $this->games_model->deleteGameById($game_id);
 
         //? Return
-        return Result::success("Game that has the ID $game_id is successfully deleted!");
+        return Result::success("Game that has the ID $game_id is successfully deleted!", ["deleted_game" => $game]);
     }
 }
