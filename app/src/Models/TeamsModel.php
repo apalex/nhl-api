@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Core\PDOService;
+use PDO;
 
 /**
  * Class TeamsModel
@@ -155,16 +156,32 @@ class TeamsModel extends BaseModel
     }
 
     /**
-     * Insert a new team inside the database.
+     * Insert a list of teams inside the database.
      *
-     * @param array $new_team New team to be inserted.
+     * @param array $teams New team(s) to be inserted.
      *
-     * @return mixed TBD.
+     * @return mixed Int containing last inserted id.
      */
-    function insertTeam(array $new_team) : mixed {
+    function insertTeams(array $teams) : mixed {
 
-        $last_id = $this->insert("teams", $new_team);
+        $last_inserted_id = $this->insert("teams", $teams);
 
-        return $last_id;
+        return $last_inserted_id;
+    }
+
+    //TODO Make a function for these inside BaseModel so can run()
+    public function checkTeamIDExists($team_id) {
+        //TODO To complete Valitron @Alex
+        $sql = "SELECT COUNT(*) FROM teams WHERE team_id = :team_id";
+    }
+
+    public function coachIdExists($coach_id) {
+        //TODO To complete Valitron @Alex
+        $sql = "SELECT COUNT(*) FROM coaches WHERE coach_id = :coach_id";
+    }
+
+    public function arenaIdExists($arena_id) {
+        //TODO To complete Valitron @Alex
+        $sql = "SELECT COUNT(*) FROM arenas WHERE arena_id = :arena_id";
     }
 }

@@ -38,13 +38,11 @@ class TeamsController extends BaseController
      *
      * @return Response JSON response containing HTTP response to the request.
      */
-    public function handlePostTeam(Request $request, Response $response): Response
+    public function handlePostTeams(Request $request, Response $response): Response
     {
         $team_info = $request->getParsedBody();
 
-        $result = $this->teamsService->createTeam($team_info);
-
-        //! Verify the outcome of the operation
+        $result = $this->teamsService->createTeams($team_info);
 
         //* Valid HTTP Response Message Structure
         if ($result->isSuccess()) {
@@ -60,7 +58,20 @@ class TeamsController extends BaseController
             ];
             return $this->renderJson($response, $payload, 201);
         }
-        return $response;
+        //* Invalid HTTP Response Message Structure
+        else {
+            $status = [
+                "Type" => "error",
+                'Code' => 422,
+                'Content-Type' => 'application/json',
+                'Message' => $result->getMessage()
+            ];
+            $payload = [
+                "status" => $status,
+                "details" => $result->getErrors()
+            ];
+            return $this->renderJson($response, $payload, 422);
+        }
     }
 
 

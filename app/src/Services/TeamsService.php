@@ -24,49 +24,42 @@ class TeamsService
     /**
      * Handles inserting a list of teams into database.
      *
-     * @param array $newTeamsData The incoming data to insert.
+     * @param array $teams The incoming data to insert.
      * @param string $message The message to be sent after inserting inside the database.
      *
      * @return Result JSON response to encapsulate and return the result of Create Operation.
      *
      */
-    function createTeam(array $data, string $message = "Team was successfully inserted into database!") : Result
+    function createTeams(array $teams, string $message = "Teams were successfully inserted!") : Result
     {
-        $data = $data[0] ?? [];
-
-        //* Convert integer fields to strings to avoid bccomp() error
-        $numericFields = ["team_id", "coach_id", "arena_id", "founding_year", "championships"];
-        foreach ($numericFields as $field) {
-            if (isset($data[$field])) {
-                $data[$field] = (string) $data[$field];
-            }
-        }
+        $insertedIDs = [];
+        $errors = [];
 
         //* Validate Received Data
-        //! TODO FINISH @ALEX
+        //! Check if empty
+        if (empty($teams)) {
+            return Result::failure("No team(s) were provided for insertion.");
+        }
         $rules = array(
             "team_id" => [
                 'integer',
-                //['min',] // ADD A GET COUNT OF TEAMS FROM DB THEN PUT IT AS MIN
+                //TODO ADD A COMPARATOR TO CHECK IF IN DB
             ],
             "team_name" => [
                 'required',
-                'alphaNum',
-                ['lengthBetween', 2, 50]
+                ['regex', '/^[A-Za-z]{2,30}(?: [A-Za-z]{2,30})*$/']
             ],
             "coach_id" => [
                 'required',
                 'integer',
                 ['min', '1'],
-                //['max',]  // ADD A GET COUNT OF COACHES FROM DB THEN PUT IT AS MAX
-                // ADD COACH ID ENSURES ID EXISTS IN DB
+                //TODO ADD A COMPARATOR TO CHECK IF EXISTS IN DB
             ],
             "arena_id" => [
                 'required',
                 'integer',
                 ['min', '1'],
-                //['max',]  // ADD A GET COUNT OF ARENAS FROM DB THEN PUT IT AS MAX
-                // ADD ARENA ID ENSURES ID EXISTS IN DB
+                //TODO ADD A COMPARATOR TO CHECK IF ARENA ID  EXISTS IN DB
             ],
             "founding_year" => [
                 'required',
@@ -90,22 +83,37 @@ class TeamsService
             ]
         );
 
-        $validator = new Validator($data, [], 'en');
-        $validator->mapFieldsRules($rules);
+        //* Convert integer fields to strings to avoid bccomp() error
+        $numericFields = ["team_id", "coach_id", "arena_id", "founding_year", "championships"];
+        foreach($teams as $index => $team) {
+            foreach ($numericFields as $field) {
+                if (isset($team[$field])) {
+                    $team[$field] = (string)$team[$field];
+                }
+            }
 
-        //* Invalid HTTP Response Message
-        //! TODO @ALEX
-        if (!$validator->validate()) {
+            //* Batch Validate and Insert
+            $validator = new Validator($team, [], 'en');
+            $validator->mapFieldsRules($rules);
 
-            //! MAKE IT THROW 409 Conflict Error ERROR EXCEPTION
-            echo $validator->errorsToJson();
-            return Result::failure("Team insert has failed!");
-        };
-
-        //* Insert new resource into model
-        $lastInstertedID = $this->teamsModel->insertTeam($data);
+            //* Invalid HTTP Response Message
+            if (!$validator->validate()) {
+                $errors[$index] = $validator->errors();
+            }
+        }
 
         //* Result Pattern
-        return Result::success($message, $lastInstertedID);
+        //? Unsuccessful
+        if (!empty($errors)) {
+            return Result::failure("Some team(s) failed validation.", $errors);
+        }
+        //? Successful
+        else {
+            //* Insert new resource into model
+            foreach($teams as $team) {
+                $insertedIDs[] = $this->teamsModel->insertTeams($team);
+            }
+            return Result::success($message, $insertedIDs);
+        }
     }
 }
