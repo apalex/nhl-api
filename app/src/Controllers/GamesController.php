@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Exceptions\HttpInvalidIDException;
 use App\Exceptions\HttpInvalidInputException;
 use App\Models\GamesModel;
+use App\Services\GamesService;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Exception\HttpNotFoundException;
@@ -16,8 +17,9 @@ class GamesController extends BaseController
 {
     /**
      * @var GamesModel $games_model The model handling game data.
+     * @var GamesService $games_service The service that handles validations.
      */
-    public function __construct(private GamesModel $games_model) {}
+    public function __construct(private GamesModel $games_model, private GamesService $games_service) {}
 
     /**
      * Handles requests to retrieve multiple games with optional filters.
@@ -124,6 +126,48 @@ class GamesController extends BaseController
                 "game" => $game_info
             ]
         );
+    }
+
+    /**
+     * Handles the DELETE request to remove a game by ID.
+     *
+     * @param Request $request The incoming HTTP request.
+     * @param Response $response The HTTP response to return.
+     * @param array $uri_args The URI arguments (should include 'game_id').
+     * @return Response The JSON response indicating the result of the deletion.
+     */
+    public function handleDeleteGame(Request $request, Response $response, array $uri_args): Response
+    {
+        $this->validateHTTPMethod($request);
+
+        //? Step 1 - Retrieve and validate game ID
+        $game_id  = $uri_args["game_id"] ?? null;
+
+        //? Step 2 - Retrieve Game Service class
+        $result = $this->games_service->deleteGame($game_id);
+
+        //? Step 3 - Make valid http error response
+        if (!$result->isSuccess()) {
+            return $this->renderJson($response, [
+                "status" => [
+                    "Type" => "error",
+                    "Code" => 400,
+                    "Content-Type" => "application/json",
+                    "Message" => $result->getMessage(),
+                    "Errors" => $result->getErrors(),
+                ]
+            ], 400);
+        }
+
+        //? Step 4 - Return response
+        return $this->renderJson($response, [
+            "status" => [
+                "Type" => "successful",
+                "Code" => 200,
+                "Content-Type" => "application/json",
+                "Message" => $result->getMessage(),
+            ]
+        ]);
     }
 
     /**
