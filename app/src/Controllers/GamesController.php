@@ -125,6 +125,51 @@ class GamesController extends BaseController
     }
 
     /**
+     * Handles PUT requests to update a game by ID.
+     *
+     * @param Request $request The incoming HTTP request.
+     * @param Response $response The outgoing HTTP response.
+     * @return Response The JSON response indicating update result.
+     */
+    public function handleUpdateGame(Request $request, Response $response): Response
+    {
+        //? Validate HTTP Method
+        $this->validateHTTPMethod($request, ["PUT"]);
+
+        //? Step 1 - Retrieve body from request
+        $body = $request->getParsedBody();
+
+        //? Step 2 - Retrieve Game Service class and call updateGame
+        $result = $this->games_service->updateGame($body);
+
+        //? Step 3 - Make valid http error response
+        if (!$result->isSuccess()) {
+            $code = str_contains(strtolower($result->getMessage()), 'Not Found') ? 404 : 422;
+
+            return $this->renderJson($response, [
+                "status" => [
+                    "Type" => "error",
+                    "Code" => $code,
+                    "Content-Type" => "application/json",
+                    "Message" => $result->getMessage(),
+                    "Errors" => $result->getErrors(),
+                ]
+            ], $code);
+        }
+
+        //? Step 4 - Return response
+        return $this->renderJson($response, [
+            "status" => [
+                "Type" => "successful",
+                "Code" => 200,
+                "Content-Type" => "application/json",
+                "Message" => $result->getMessage(),
+            ],
+            "data" => $result->getData()
+        ], 200);
+    }
+
+    /**
      * Handles the DELETE request to remove a game by ID.
      *
      * @param Request $request The incoming HTTP request.
