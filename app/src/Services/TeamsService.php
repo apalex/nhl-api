@@ -25,12 +25,11 @@ class TeamsService
      * Handles inserting a list of teams into database.
      *
      * @param array $teams The incoming data to insert.
-     * @param string $message The message to be sent after inserting inside the database.
      *
      * @return Result JSON response to encapsulate and return the result of Create Operation.
      *
      */
-    function createTeams(array $teams, string $message = "Teams were successfully inserted!") : Result
+    function createTeams(array $teams) : Result
     {
         $insertedIDs = [];
         $errors = [];
@@ -124,10 +123,10 @@ class TeamsService
         //* Successful
         else {
             //* Insert new resource into model
-            foreach($teams as $team) {
-                $insertedIDs[] = $this->teamsModel->insertTeams($team);
+            foreach($teams as $index => $team) {
+                $insertedIDs[$index] = $this->teamsModel->insertTeams($team);
             }
-            return Result::success($message, $insertedIDs);
+            return Result::success("Team(s) were successfully inserted!", $insertedIDs);
         }
     }
 }

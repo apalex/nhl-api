@@ -25,7 +25,7 @@ class GamesService
         $rules = [
             "game_id" => [
                 'required',
-                ['regex', '/^\d+$/'],
+                'integer',
                 ['min', '1']
             ]
         ];
@@ -42,7 +42,7 @@ class GamesService
         $game = $this->games_model->getGamesById($game_id);
         if (empty($game)) {
             return Result::failure(
-                "Game that has the ID $game_id is not found!",
+                "Game with the ID $game_id has no matching record!",
                 ["game_id" => ["Game ID $game_id does not exist in the database!"]]
             );
         }
@@ -51,6 +51,6 @@ class GamesService
         $this->games_model->deleteGameById($game_id);
 
         //? Return
-        return Result::success("Game that has the ID $game_id is successfully deleted!", ["deleted_game" => $game]);
+        return Result::success("Game with the ID $game_id has been successfully deleted!", ["deleted_game" => $game]);
     }
 }
