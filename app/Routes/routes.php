@@ -68,6 +68,8 @@ return static function (Slim\App $app): void {
 
     //* ROUTE: PUT
 
-    //* ROUTE: DELETE
+    //* ROUTE: CREATE GAMES
+    $app->post('/games', [GamesController::class, 'handleCreateGame']);
+    //* ROUTE: DELETE GAMES
     $app->delete('/games', [GamesController::class, 'handleDeleteGame']);
 };
