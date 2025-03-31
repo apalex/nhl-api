@@ -56,6 +56,66 @@ class GamesService
     }
 
     /**
+     * Updates a game by its ID.
+     *
+     * @param array $gameData The incoming data with fields to update.
+     * @return Result A Result object with update status and updated data.
+     */
+    public function updateGame(array $game_data): Result
+    {
+        //? Rules!
+        $rules = [
+            "game_id" => ['required', ['regex', '/^\d+$/'], ['min', '1']]
+        ];
+
+        //? Make game_id into string
+        if (isset($game_data["game_id"])) {
+            $game_data["game_id"] = (string) $game_data["game_id"];
+        }
+
+
+        //? Input Validation
+        $validator = new Validator($game_data, [], 'en');
+        $validator->mapFieldsRules($rules);
+
+        if (!$validator->validate()) {
+            return Result::failure("Invalid game ID format!", $validator->errors());
+        }
+
+        //? Check if game exists
+        $game = $this->games_model->getGamesById($game_data["game_id"]);
+        if (empty($game)) {
+            return Result::failure(
+                "Game with the ID {$game_data["game_id"]} Not Found!",
+                ["game_id" => ["Game ID does not exists in the database!"]]
+            );
+        }
+
+        //? Update Data
+        $fields = ['game_date', 'home_team_id', 'away_team_id', 'home_score', 'away_score', 'arena_id', 'game_type', 'side_start'];
+        $update_data = [];
+
+        foreach ($fields as $field) {
+            if (isset($game_data[$field])) {
+                $update_data[$field] = $game_data[$field];
+            }
+        }
+
+        if (empty($update_data)) {
+            return Result::failure("Input or provide the fields to update!", [
+                "fields" => ["Give at least one valid field to update!"]
+            ]);
+        }
+
+        //? Update Game
+        $this->games_model->updateGameById($game_data["game_id"], $update_data);
+        $updated_game = $this->games_model->getGamesById($game_data["game_id"]);
+
+        //? Return updated Game
+        return Result::success("The game is now updated!", ["updated_game" => $updated_game]);
+    }
+
+    /**
      * Handles deleting a game by its ID with validation.
      *
      * @param string $game_id The game ID to delete.
