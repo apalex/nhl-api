@@ -40,48 +40,6 @@ class TeamsService
         if (empty($teams)) {
             return Result::failure("No team(s) were provided for insertion.");
         }
-        $rules = array(
-            "team_id" => [
-                'integer',
-                //TODO ADD A COMPARATOR TO CHECK IF IN DB
-            ],
-            "team_name" => [
-                'required',
-                ['regex', '/^[A-Za-z]{2,30}(?: [A-Za-z]{2,30})*$/']
-            ],
-            "coach_id" => [
-                'required',
-                'integer',
-                ['min', '1'],
-                //TODO ADD A COMPARATOR TO CHECK IF EXISTS IN DB
-            ],
-            "arena_id" => [
-                'required',
-                'integer',
-                ['min', '1'],
-                //TODO ADD A COMPARATOR TO CHECK IF ARENA ID  EXISTS IN DB
-            ],
-            "founding_year" => [
-                'required',
-                'integer',
-                ['min', '1800'],
-                ['max', date('Y')]
-            ],
-            "championships" => [
-                'required',
-                'integer',
-                ['min', '0']
-            ],
-            "general_manager" => [
-                'required',
-                ['regex', '/^[A-Za-z\s\'\-]+$/']
-            ],
-            "abbreviation" => [
-                'required',
-                ['length', 3],
-                ['regex', '/^[A-Z]{3}$/']
-            ]
-        );
 
         //* Convert integer fields to strings to avoid bccomp() error
         $numericFields = ["team_id", "coach_id", "arena_id", "founding_year", "championships"];
@@ -91,6 +49,62 @@ class TeamsService
                     $team[$field] = (string)$team[$field];
                 }
             }
+
+            //* Validator Rules
+            $rules = array(
+                "team_id" => [
+                    'integer',
+                    [function() use ($team) {
+                        return !$this->teamsModel->checkTeamIDInUse((int)$team["team_id"]);
+                    }, 'is already in use!']
+                ],
+                "team_name" => [
+                    'required',
+                    ['regex', '/^[A-Za-z]{2,30}(?: [A-Za-z]{2,30})*$/']
+                ],
+                "coach_id" => [
+                    'required',
+                    'integer',
+                    ['min', '1'],
+                    [function() use ($team) {
+                        return !count($this->teamsModel->checkCoachIDExists((int)$team["coach_id"])) == 0;
+                    }, 'does not exist!'],
+                    [function() use ($team) {
+                        return !$this->teamsModel->checkCoachIDInUse((int)$team["coach_id"]);
+                    }, 'is already in use!']
+                ],
+                "arena_id" => [
+                    'required',
+                    'integer',
+                    ['min', '1'],
+                    [function() use ($team) {
+                        return !count($this->teamsModel->checkArenaIDExists((int)$team["arena_id"])) == 0;
+                    }, 'does not exist!'],
+                    [function() use ($team) {
+                        return !$this->teamsModel->checkArenaIDInUse((int)$team["arena_id"]);
+                    }, 'is already in use!']
+                ],
+                "founding_year" => [
+                    'required',
+                    'integer',
+                    ['min', '1800'],
+                    ['max', date('Y')]
+                ],
+                "championships" => [
+                    'required',
+                    'integer',
+                    ['min', '0']
+                ],
+                "general_manager" => [
+                    'required',
+                    ['regex', '/^[A-Za-z\s\'\-]+$/']
+                ],
+                "abbreviation" => [
+                    'required',
+                    ['length', 3],
+                    ['regex', '/^[A-Z]{3}$/']
+                ]
+            );
 
             //* Batch Validate and Insert
             $validator = new Validator($team, [], 'en');
@@ -103,11 +117,11 @@ class TeamsService
         }
 
         //* Result Pattern
-        //? Unsuccessful
+        //* Unsuccessful
         if (!empty($errors)) {
             return Result::failure("Some team(s) failed validation.", $errors);
         }
-        //? Successful
+        //* Successful
         else {
             //* Insert new resource into model
             foreach($teams as $team) {

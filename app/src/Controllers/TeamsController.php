@@ -40,8 +40,13 @@ class TeamsController extends BaseController
      */
     public function handlePostTeams(Request $request, Response $response): Response
     {
+        //* Validate HTTP Method Sent
+        $this->validateHTTPMethod($request, ['POST']);
+
+        //* Fetch Body
         $team_info = $request->getParsedBody();
 
+        //* Send Body to Service
         $result = $this->teamsService->createTeams($team_info);
 
         //* Valid HTTP Response Message Structure

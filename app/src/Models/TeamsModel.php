@@ -169,19 +169,87 @@ class TeamsModel extends BaseModel
         return $last_inserted_id;
     }
 
-    //TODO Make a function for these inside BaseModel so can run()
-    public function checkTeamIDExists($team_id) {
-        //TODO To complete Valitron @Alex
+    /**
+     * Checks if a given team ID is already in use.
+     *
+     * @param int $team_id The ID of the team to check.
+     *
+     * @return bool Returns true if the team ID is already in use, else false.
+     */
+    public function checkTeamIDInUse(int $team_id)
+    {
+        //* SQL Query
         $sql = "SELECT COUNT(*) FROM teams WHERE team_id = :team_id";
+
+        //* If COUNT > 0, then team_id is already in use
+        return $this->fetchSingle($sql, ['team_id' => $team_id])["COUNT(*)"] > 0;
     }
 
-    public function coachIdExists($coach_id) {
-        //TODO To complete Valitron @Alex
-        $sql = "SELECT COUNT(*) FROM coaches WHERE coach_id = :coach_id";
+    /**
+     * Checks if a given coach ID exists in the database.
+     *
+     * @param int $coach_id The ID of the coach to check.
+     *
+     * @return array Returns the coach record if found, else empty array.
+     */
+    public function checkCoachIDExists(int $coach_id) {
+
+        //* SQL Query
+        $sql = "SELECT * FROM coaches WHERE coach_id = :coach_id";
+
+        //* Store in a var if fetchSingle did not find anything, then can return an empty array
+        $result = $this->fetchSingle($sql, ['coach_id' => $coach_id]);
+
+        return $result !== false ? $result : [];
     }
 
-    public function arenaIdExists($arena_id) {
-        //TODO To complete Valitron @Alex
-        $sql = "SELECT COUNT(*) FROM arenas WHERE arena_id = :arena_id";
+    /**
+     * Checks if a given coach ID is already assigned to a team.
+     *
+     * @param int $coach_id The ID of the coach to check.
+     *
+     * @return bool Returns true if the coach ID is already in use, else false.
+     */
+    public function checkCoachIDInUse(int $coach_id) {
+
+        //* SQL Query
+        $sql = "SELECT COUNT(*) FROM teams WHERE coach_id = :coach_id";
+
+        //* If COUNT > 0, then coach_id is already in use
+        return $this->fetchSingle($sql, ['coach_id' => $coach_id])["COUNT(*)"] > 0;
+    }
+
+    /**
+     * Checks if a given arena ID exists in the database.
+     *
+     * @param int $arena_id The ID of the arena to check.
+     *
+     * @return array Returns the arena record if found, else an empty array.
+     */
+    public function checkArenaIDExists(int $arena_id) {
+
+        //* SQL Query
+        $sql = "SELECT * FROM arenas WHERE arena_id = :arena_id";
+
+        //* Store in a var if fetchSingle did not find anything, then can return an empty array
+        $result = $this->fetchSingle($sql, ['arena_id' => $arena_id]);
+
+        return $result !== false ? $result : [];
+    }
+
+    /**
+     * Checks if a given arena ID is already assigned to a team.
+     *
+     * @param int $arena_id The ID of the arena to check.
+     *
+     * @return bool Returns true if the arena ID is already in use, else false.
+     */
+    public function checkArenaIDInUse(int $arena_id) {
+
+        //* SQL Query
+        $sql = "SELECT COUNT(*) FROM teams WHERE arena_id = :arena_id";
+
+        //* If COUNT > 0, then arena_id is already in use
+        return $this->fetchSingle($sql, ['arena_id' => $arena_id])["COUNT(*)"] > 0;
     }
 }
