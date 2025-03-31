@@ -151,11 +151,24 @@ class GamesModel extends BaseModel
      * Deletes a game by its ID.
      *
      * @param string $game_id The ID of the game to delete.
-     * 
+     *
      * @return void
      */
     public function deleteGameById(string $game_id): void
     {
         $this->delete("games", ["game_id" => $game_id]);
+    }
+
+    /**
+     * Inserts a new game into the database.
+     *
+     * Uses the base model's insert method to add the game and returns the inserted ID.
+     *
+     * @param array $data An associative array of column => value pairs for the new game.
+     * @return string The ID of the newly inserted game.
+     */
+    public function createGame(array $data): string
+    {
+        return $this->insert("games", $data);
     }
 }
