@@ -63,23 +63,40 @@ class GamesService
      */
     public function updateGame(array $game_data): Result
     {
-        //? Rules!
-        $rules = [
-            "game_id" => ['required', ['regex', '/^\d+$/'], ['min', '1']]
-        ];
-
-        //? Make game_id into string
-        if (isset($game_data["game_id"])) {
-            $game_data["game_id"] = (string) $game_data["game_id"];
+        //? Early check for game_id to avoid preg_match() crash or null errors
+        if (!isset($game_data['game_id']) || !preg_match('/^\d+$/', (string) $game_data['game_id']) || (int) $game_data['game_id'] < 1) {
+            return Result::failure("Invalid game ID format!", [
+                "game_id" => ["Game ID is required, must be a number, and at least 1."]
+            ]);
         }
 
+        //? Convert all numeric values to strings to avoid preg_match() errors
+        foreach ($game_data as $key => $value) {
+            if (is_int($value) || is_float($value)) {
+                $game_data[$key] = (string) $value;
+            }
+        }
+
+        //? Rules!
+        $rules = [
+            "game_date" => [['regex', '/^\d{4}-\d{2}-\d{2}$/']],
+            "home_team_id" => [['regex', '/^\d+$/']],
+            "away_team_id" => [['regex', '/^\d+$/'], ['min', '1']],
+            "home_score" => [['regex', '/^\d+$/'], ['min', '0']],
+            "away_score" => [['regex', '/^\d+$/'], ['min', '0']],
+            "arena_id" => [['regex', '/^\d+$/'], ['min', '1']],
+            "game_type" => [['in', ['regular', 'playoffs', 'preseason']]],
+            "side_start" => [['in', ['left', 'right']]],
+        ];
 
         //? Input Validation
         $validator = new Validator($game_data, [], 'en');
         $validator->mapFieldsRules($rules);
+        $is_valid = $validator->validate();
 
-        if (!$validator->validate()) {
-            return Result::failure("Invalid game ID format!", $validator->errors());
+        //? Custom error messages
+        if (!$is_valid) {
+            return Result::failure("Invalid game data!", $validator->errors());
         }
 
         //? Check if game exists
@@ -114,6 +131,7 @@ class GamesService
         //? Return updated Game
         return Result::success("The game is now updated!", ["updated_game" => $updated_game]);
     }
+
 
     /**
      * Handles deleting a game by its ID with validation.
