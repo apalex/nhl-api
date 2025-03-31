@@ -78,6 +78,102 @@ class GamesController extends BaseController
     }
 
     /**
+     * Handles POST requests to create a new game record.
+     *
+     * Validates the JSON input, sends the data to the service for processing,
+     * and returns a structured JSON response with status and inserted data.
+     *
+     * @param Request $request The incoming HTTP request.
+     * @param Response $response The outgoing HTTP response.
+     *
+     * @return Response The JSON response containing creation status and game data.
+     */
+    public function handleCreateGame(Request $request, Response $response): Response
+    {
+        //? Validate HTTP Method
+        $this->validateHTTPMethod($request, ["POST"]);
+
+        //? Step 1 - Retrieve body from request
+        $body = $request->getParsedBody();
+
+        //? Step 2 - Retrieve Game Service class and call createGame
+        $result = $this->games_service->createGame($body);
+
+        //? Step 3 - Make valid http error response
+        if (!$result->isSuccess()) {
+            return $this->renderJson($response, [
+                "status" => [
+                    "Type" => "error",
+                    "Code" => 422,
+                    "Content-Type" => "application/json",
+                    "Message" => $result->getMessage(),
+                    "Errors" => $result->getErrors(),
+                ]
+            ], 422);
+        }
+
+        //? Step 4 - Return Response
+        return $this->renderJson($response, [
+            "status" => [
+                "Type" => "successful",
+                "Code" => 201,
+                "Content-Type" => "application/json",
+                "Message" => $result->getMessage(),
+            ],
+            "data" => $result->getData()
+        ], 201);
+    }
+
+    /**
+     * Handles the DELETE request to remove a game by ID.
+     *
+     * @param Request $request The incoming HTTP request.
+     * @param Response $response The HTTP response to return.
+     * @param array $uri_args The URI arguments (should include 'game_id').
+     * @return Response The JSON response indicating the result of the deletion.
+     */
+    public function handleDeleteGame(Request $request, Response $response): Response
+    {
+        //? Validate HTTP Method
+        $this->validateHTTPMethod($request, ["DELETE"]);
+
+        //? Step 1 - Retrieve and validate game ID
+        $body = $request->getParsedBody();
+        $game_id  = $body["game_id"] ?? null;
+
+        //? Step 2 - Retrieve Game Service class and call deleteGame
+        $result = $this->games_service->deleteGame($game_id);
+
+        //? Step 3 - Make valid http error response
+        if (!$result->isSuccess()) {
+
+            $message = $result->getMessage();
+            $code = str_contains(strtolower($message), 'Not Found') ? 404 : 400;
+
+            return $this->renderJson($response, [
+                "status" => [
+                    "Type" => "error",
+                    "Code" => $code,
+                    "Content-Type" => "application/json",
+                    "Message" => $message,
+                    "Errors" => $result->getErrors(),
+                ]
+            ], $code);
+        }
+
+        //? Step 4 - Return response
+        return $this->renderJson($response, [
+            "status" => [
+                "Type" => "successful",
+                "Code" => 200,
+                "Content-Type" => "application/json",
+                "Message" => $result->getMessage(),
+            ],
+            "data" => $result->getData()
+        ], 200);
+    }
+
+    /**
      * Handles requests to retrieve game details by game ID.
      *
      * @param Request $request The incoming HTTP request.
@@ -126,54 +222,6 @@ class GamesController extends BaseController
                 "game" => $game_info
             ]
         );
-    }
-
-    /**
-     * Handles the DELETE request to remove a game by ID.
-     *
-     * @param Request $request The incoming HTTP request.
-     * @param Response $response The HTTP response to return.
-     * @param array $uri_args The URI arguments (should include 'game_id').
-     * @return Response The JSON response indicating the result of the deletion.
-     */
-    public function handleDeleteGame(Request $request, Response $response): Response
-    {
-        $this->validateHTTPMethod($request, ["DELETE"]);
-
-        //? Step 1 - Retrieve and validate game ID
-        $body = $request->getParsedBody();
-        $game_id  = $body["game_id"] ?? null;
-
-        //? Step 2 - Retrieve Game Service class
-        $result = $this->games_service->deleteGame($game_id);
-
-        //? Step 3 - Make valid http error response
-        if (!$result->isSuccess()) {
-
-            $message = $result->getMessage();
-            $code = str_contains(strtolower($message), 'not found') ? 404 : 400;
-
-            return $this->renderJson($response, [
-                "status" => [
-                    "Type" => "error",
-                    "Code" => $code,
-                    "Content-Type" => "application/json",
-                    "Message" => $message,
-                    "Errors" => $result->getErrors(),
-                ]
-            ], $code);
-        }
-
-        //? Step 4 - Return response
-        return $this->renderJson($response, [
-            "status" => [
-                "Type" => "successful",
-                "Code" => 200,
-                "Content-Type" => "application/json",
-                "Message" => $result->getMessage(),
-            ],
-            "data" => $result->getData()
-        ], 200);
     }
 
     /**
