@@ -136,12 +136,13 @@ class GamesController extends BaseController
      * @param array $uri_args The URI arguments (should include 'game_id').
      * @return Response The JSON response indicating the result of the deletion.
      */
-    public function handleDeleteGame(Request $request, Response $response, array $uri_args): Response
+    public function handleDeleteGame(Request $request, Response $response): Response
     {
         $this->validateHTTPMethod($request, ["DELETE"]);
 
         //? Step 1 - Retrieve and validate game ID
-        $game_id  = $uri_args["game_id"] ?? null;
+        $body = $request->getParsedBody();
+        $game_id  = $body["game_id"] ?? null;
 
         //? Step 2 - Retrieve Game Service class
         $result = $this->games_service->deleteGame($game_id);
