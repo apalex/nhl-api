@@ -183,4 +183,42 @@ class GamesModel extends BaseModel
     {
         $this->delete("games", ["game_id" => $game_id]);
     }
+
+    /**
+     * Checks if a game ID already exists.
+     *
+     * @param int $game_id The game ID to check.
+     * @return bool True if it exists, false otherwise.
+     */
+    public function checkGameIDInUse(int $game_id): bool
+    {
+        $sql = "SELECT COUNT(*) as count FROM games WHERE game_id = :game_id";
+        $result = $this->fetchSingle($sql, ['game_id' => $game_id]);
+        return $result && $result["count"] > 0;
+    }
+
+    /**
+     * Checks if a team ID already exists.
+     *
+     * @param int $team_id The team ID to check.
+     * @return bool True if it exists, false otherwise.
+     */
+    public function checkTeamIDExists(int $team_id): bool
+    {
+        $sql = "SELECT COUNT(*) as count FROM teams WHERE team_id = :team_id";
+        $result = $this->fetchSingle($sql, ['team_id' => $team_id]);
+        return $result && $result["count"] > 0;
+    }
+
+    /**
+     * Checks if a given arena ID exists in the database.
+     *
+     * @param int $arena_id The arena ID to check.
+     * @return bool True if exists, false otherwise.
+     */
+    public function checkArenaIdExists(int $arena_id): bool
+    {
+        $sql = "SELECT COUNT(*) FROM arenas WHERE arena_id = :arena_id";
+        return $this->fetchSingle($sql, ['arena_id' => $arena_id])["COUNT(*)"] > 0;
+    }
 }
