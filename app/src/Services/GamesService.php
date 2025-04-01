@@ -48,6 +48,31 @@ class GamesService
             return Result::failure("Can't create game! Invalid input!", $validator->errors());
         }
 
+        //? Check if game_id is already used, home, away team_id and arena id exists in db
+        if ($this->games_model->getGamesById($game_data["game_id"])) {
+            return Result::failure("The game_id already exists in the database!", [
+                "game_id" => ["Game ID {$game_data['game_id']} is already used!"]
+            ]);
+        }
+
+        if (!$this->games_model->checkTeamIDExists((int) $game_data["home_team_id"])) {
+            return Result::failure("Home team does not exist!", [
+                "home_team_id" => ["Home Team ID {$game_data['home_team_id']} is not found in the database!"]
+            ]);
+        }
+
+        if (!$this->games_model->checkTeamIDExists((int) $game_data["away_team_id"])) {
+            return Result::failure("Away team does not exist!", [
+                "away_team_id" => ["Away Team ID {$game_data['away_team_id']} is not found in the database!"]
+            ]);
+        }
+
+        if (!$this->games_model->checkArenaIdExists((int)$game_data["arena_id"])) {
+            return Result::failure("Can't create game! Invalid input!", [
+                "arena_id" => ["Arena ID does not exist in the database."]
+            ]);
+        }
+
         $insertedId = $this->games_model->createGame($game_data);
         $new_game = $this->games_model->getGamesById($insertedId);
 
@@ -95,7 +120,6 @@ class GamesService
         $validator->mapFieldsRules($rules);
         $is_valid = $validator->validate();
 
-        //? Custom error messages
         if (!$is_valid) {
             return Result::failure("Invalid game data!", $validator->errors());
         }
@@ -107,6 +131,25 @@ class GamesService
                 "Game with the ID {$game_data["game_id"]} Not Found!",
                 ["game_id" => ["Game ID does not exists in the database!"]]
             );
+        }
+
+        //? Check home,away team id and arena if it exists in the database
+        if (isset($game_data['home_team_id']) && !$this->games_model->checkTeamIDExists((int) $game_data["home_team_id"])) {
+            return Result::failure("Home team does not exist!", [
+                "home_team_id" => ["Home Team ID {$game_data['home_team_id']} is not found in the database!"]
+            ]);
+        }
+
+        if (isset($game_data['home_team_id']) && !$this->games_model->checkTeamIDExists((int) $game_data["home_team_id"])) {
+            return Result::failure("Away team does not exist!", [
+                "away_team_id" => ["Away Team ID {$game_data['away_team_id']} is not found in the database!"]
+            ]);
+        }
+
+        if (!$this->games_model->checkArenaIdExists((int)$game_data["arena_id"])) {
+            return Result::failure("Can't create game! Invalid input!", [
+                "arena_id" => ["Arena ID does not exist in the database."]
+            ]);
         }
 
         //? Update Data
@@ -138,7 +181,7 @@ class GamesService
      * Handles deleting a game by its ID with validation.
      *
      * @param string $game_id The game ID to delete.
-     * 
+     *
      * @return Result The result of the deletion operation.
      */
     public function deleteGame(string $game_id): Result
