@@ -93,8 +93,11 @@ class GamesController extends BaseController
         //? Validate HTTP Method
         $this->validateHTTPMethod($request, ["POST"]);
 
-        //? Step 1 - Retrieve body from request
+        //? Step 1 - Retrieve body from request and encase it
         $body = $request->getParsedBody();
+        if (is_array($body) && isset($body[0]) && is_array($body[0])) {
+            $body = $body[0];
+        }
 
         //? Step 2 - Retrieve Game Service class and call createGame
         $result = $this->games_service->createGame($body);
@@ -136,8 +139,11 @@ class GamesController extends BaseController
         //? Validate HTTP Method
         $this->validateHTTPMethod($request, ["PUT"]);
 
-        //? Step 1 - Retrieve body from request
+        //? Step 1 - Retrieve body from request and encase it
         $body = $request->getParsedBody();
+        if (is_array($body) && isset($body[0]) && is_array($body[0])) {
+            $body = $body[0];
+        }
 
         //? Step 2 - Retrieve Game Service class and call updateGame
         $result = $this->games_service->updateGame($body);
@@ -182,8 +188,12 @@ class GamesController extends BaseController
         //? Validate HTTP Method
         $this->validateHTTPMethod($request, ["DELETE"]);
 
-        //? Step 1 - Retrieve and validate game ID
+        //? Step 1 - Retrieve and validate game ID and encase it
         $body = $request->getParsedBody();
+        if (is_array($body) && isset($body[0]) && is_array($body[0])) {
+            $body = $body[0];
+        }
+
         $game_id  = $body["game_id"] ?? null;
 
         //? Step 2 - Retrieve Game Service class and call deleteGame
