@@ -71,7 +71,7 @@ class TeamsModel extends BaseModel
 
         //* Order By
         if (isset($filters['order_by'])) {
-            switch(strtolower($filters['order_by'])) {
+            switch (strtolower($filters['order_by'])) {
                 case 'asc':
                     break;
                 case 'desc':
@@ -162,7 +162,8 @@ class TeamsModel extends BaseModel
      *
      * @return mixed Int containing last inserted id.
      */
-    function insertTeams(array $teams) : mixed {
+    function insertTeams(array $teams): mixed
+    {
 
         $last_inserted_id = $this->insert("teams", $teams);
 
@@ -192,7 +193,8 @@ class TeamsModel extends BaseModel
      *
      * @return array Returns the coach record if found, else empty array.
      */
-    public function checkCoachIDExists(int $coach_id) {
+    public function checkCoachIDExists(int $coach_id)
+    {
 
         //* SQL Query
         $sql = "SELECT * FROM coaches WHERE coach_id = :coach_id";
@@ -210,7 +212,8 @@ class TeamsModel extends BaseModel
      *
      * @return bool Returns true if the coach ID is already in use, else false.
      */
-    public function checkCoachIDInUse(int $coach_id) {
+    public function checkCoachIDInUse(int $coach_id)
+    {
 
         //* SQL Query
         $sql = "SELECT COUNT(*) FROM teams WHERE coach_id = :coach_id";
@@ -226,7 +229,8 @@ class TeamsModel extends BaseModel
      *
      * @return array Returns the arena record if found, else an empty array.
      */
-    public function checkArenaIDExists(int $arena_id) {
+    public function checkArenaIDExists(int $arena_id)
+    {
 
         //* SQL Query
         $sql = "SELECT * FROM arenas WHERE arena_id = :arena_id";
@@ -244,12 +248,28 @@ class TeamsModel extends BaseModel
      *
      * @return bool Returns true if the arena ID is already in use, else false.
      */
-    public function checkArenaIDInUse(int $arena_id) {
+    public function checkArenaIDInUse(int $arena_id)
+    {
 
         //* SQL Query
         $sql = "SELECT COUNT(*) FROM teams WHERE arena_id = :arena_id";
 
         //* If COUNT > 0, then arena_id is already in use
         return $this->fetchSingle($sql, ['arena_id' => $arena_id])["COUNT(*)"] > 0;
+    }
+
+    /**
+     * Deletes a team by its ID.
+     *
+     * @param string $team_id The ID of the team to delete.
+     *
+     * @return void
+     */
+    public function deleteTeamById(int $team_id) : bool
+    {
+        //* DELETE
+        $result = $this->delete("teams", ["team_id" => $team_id]);
+
+        return $result > 0;
     }
 }

@@ -59,6 +59,7 @@ class GamesService
      * Updates a game by its ID.
      *
      * @param array $gameData The incoming data with fields to update.
+     *
      * @return Result A Result object with update status and updated data.
      */
     public function updateGame(array $game_data): Result
@@ -137,6 +138,7 @@ class GamesService
      * Handles deleting a game by its ID with validation.
      *
      * @param string $game_id The game ID to delete.
+     * 
      * @return Result The result of the deletion operation.
      */
     public function deleteGame(string $game_id): Result

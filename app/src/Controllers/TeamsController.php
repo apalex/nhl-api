@@ -26,60 +26,6 @@ class TeamsController extends BaseController
      */
     public function __construct(private TeamsModel $teamsModel, private TeamsService $teamsService) {}
 
-    //* ROUTE: POST /teams
-
-    /**
-     * Handles inserting a team into database.
-     *
-     * @param Request $request The incoming HTTP request.
-     * @param Response $response The outgoing HTTP response.
-     *
-     * @throws HttpInvalidInputException If query parameters `page` or `page_size` are not numeric.
-     *
-     * @return Response JSON response containing HTTP response to the request.
-     */
-    public function handlePostTeams(Request $request, Response $response): Response
-    {
-        //* Validate HTTP Method Sent
-        $this->validateHTTPMethod($request, ['POST']);
-
-        //* Fetch Body
-        $team_info = $request->getParsedBody();
-
-        //* Send Body to Service
-        $result = $this->teamsService->createTeams($team_info);
-
-        //* Valid HTTP Response Message Structure
-        if ($result->isSuccess()) {
-            $status = [
-                "Type" => "successful",
-                'Code' => 201,
-                "Content-Type" => "application/json",
-                'Message' => $result->getMessage()
-            ];
-            $payload = [
-                "status" => $status,
-                "team(s)" => $team_info
-            ];
-            return $this->renderJson($response, $payload, 201);
-        }
-        //* Invalid HTTP Response Message Structure
-        else {
-            $status = [
-                "Type" => "error",
-                'Code' => 422,
-                'Content-Type' => 'application/json',
-                'Message' => $result->getMessage()
-            ];
-            $payload = [
-                "status" => $status,
-                "details" => $result->getErrors()
-            ];
-            return $this->renderJson($response, $payload, 422);
-        }
-    }
-
-
     //* ROUTE: GET /teams
 
     /**
@@ -233,6 +179,159 @@ class TeamsController extends BaseController
             ),
             "details" => $team_info
         ]);
+    }
+
+    //* ROUTE: POST /teams
+
+    /**
+     * Handles inserting team(s) into database.
+     *
+     * @param Request $request The incoming HTTP request.
+     * @param Response $response The outgoing HTTP response.
+     *
+     * @return Response JSON response containing HTTP response to the request.
+     */
+    public function handlePostTeams(Request $request, Response $response): Response
+    {
+        //* Validate HTTP Method Sent
+        $this->validateHTTPMethod($request, ['POST']);
+
+        //* Fetch Body
+        $team_info = $request->getParsedBody();
+
+        //* Send Body to Service
+        $result = $this->teamsService->createTeams($team_info);
+
+        //* Valid HTTP Response Message Structure
+        if ($result->isSuccess()) {
+            $status = [
+                "Type" => "successful",
+                'Code' => 201,
+                "Content-Type" => "application/json",
+                'Message' => $result->getMessage()
+            ];
+            $payload = [
+                "status" => $status,
+                "team(s)" => $result->getData()
+            ];
+            return $this->renderJson($response, $payload, 201);
+        }
+        //* Invalid HTTP Response Message Structure
+        else {
+            $status = [
+                "Type" => "error",
+                'Code' => 422,
+                'Content-Type' => 'application/json',
+                'Message' => $result->getMessage()
+            ];
+            $payload = [
+                "status" => $status,
+                "details" => $result->getErrors()
+            ];
+            return $this->renderJson($response, $payload, 422);
+        }
+    }
+
+    //* ROUTE: PUT /teams
+
+    /**
+     * Handles updating team(s) into database.
+     *
+     * @param Request $request The incoming HTTP request.
+     * @param Response $response The outgoing HTTP response.
+     *
+     * @return Response JSON response containing HTTP response to the request.
+     */
+    public function handlePutTeams(Request $request, Response $response): Response
+    {
+        //* Validate HTTP Method Sent
+        $this->validateHTTPMethod($request, ['PUT']);
+
+        //* Fetch Body
+        $team_info = $request->getParsedBody();
+
+        //* Send Body to Service
+        $result = $this->teamsService->updateTeams($team_info);
+
+        //* Valid HTTP Response Message Structure
+        if ($result->isSuccess()) {
+            $status = [
+                "Type" => "successful",
+                'Code' => 200,
+                "Content-Type" => "application/json",
+                'Message' => $result->getMessage()
+            ];
+            $payload = [
+                "status" => $status,
+                "team(s)" => $team_info
+            ];
+            return $this->renderJson($response, $payload, 200);
+        }
+        //* Invalid HTTP Response Message Structure
+        else {
+            $status = [
+                "Type" => "error",
+                'Code' => 422,
+                'Content-Type' => 'application/json',
+                'Message' => $result->getMessage()
+            ];
+            $payload = [
+                "status" => $status,
+                "details" => $result->getErrors()
+            ];
+            return $this->renderJson($response, $payload, 422);
+        }
+    }
+
+    //* ROUTE: DELETE /teams
+
+    /**
+     * Handles deleting team(s) into database.
+     *
+     * @param Request $request The incoming HTTP request.
+     * @param Response $response The outgoing HTTP response.
+     *
+     * @return Response JSON response containing HTTP response to the request.
+     */
+    public function handleDeleteTeams(Request $request, Response $response): Response
+    {
+        //* Validate HTTP Method Sent
+        $this->validateHTTPMethod($request, ['DELETE']);
+
+        //* Fetch Body
+        $team_info = $request->getParsedBody();
+
+        //* Send Body to Service
+        $result = $this->teamsService->deleteTeams($team_info);
+
+        //* Valid HTTP Response Message Structure
+        if ($result->isSuccess()) {
+            $status = [
+                "Type" => "successful",
+                'Code' => 200,
+                "Content-Type" => "application/json",
+                'Message' => $result->getMessage()
+            ];
+            $payload = [
+                "status" => $status,
+                "team(s)" => $result->getData()
+            ];
+            return $this->renderJson($response, $payload, 200);
+        }
+        //* Invalid HTTP Response Message Structure
+        else {
+            $status = [
+                "Type" => "error",
+                'Code' => 422,
+                'Content-Type' => 'application/json',
+                'Message' => $result->getMessage()
+            ];
+            $payload = [
+                "status" => $status,
+                "details" => $result->getErrors()
+            ];
+            return $this->renderJson($response, $payload, 422);
+        }
     }
 
     /**

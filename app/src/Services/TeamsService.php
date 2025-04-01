@@ -124,9 +124,176 @@ class TeamsService
         else {
             //* Insert new resource into model
             foreach($teams as $index => $team) {
-                $insertedIDs[$index] = $this->teamsModel->insertTeams($team);
+                $insertedIDs[$index] = $team;
+                $this->teamsModel->insertTeams($team);
             }
             return Result::success("Team(s) were successfully inserted!", $insertedIDs);
+        }
+    }
+
+    /**
+     * Handles updating team(s) into database.
+     *
+     * @param array $teams The incoming data to update.
+     *
+     * @return Result JSON response to encapsulate and return the result of Put Operation.
+     *
+     */
+    function updateTeams(array $teams) : void
+    {
+        // $updateIDs = [];
+        // $errors = [];
+
+        // //* Validate Received Data
+        // //! Check if empty
+        // if (empty($teams)) {
+        //     return Result::failure("No team(s) were provided for updating.");
+        // }
+
+        // //* Convert integer fields to strings to avoid bccomp() error
+        // $numericFields = ["team_id", "coach_id", "arena_id", "founding_year", "championships"];
+        // foreach($teams as $index => $team) {
+        //     foreach ($numericFields as $field) {
+        //         if (isset($team[$field])) {
+        //             $team[$field] = (string)$team[$field];
+        //         }
+        //     }
+
+        //     //* Validator Rules
+        //     $rules = array(
+        //         "team_id" => [
+        //             'integer',
+        //             [function() use ($team) {
+        //                 return !$this->teamsModel->checkTeamIDInUse((int)$team["team_id"]);
+        //             }, 'is already in use!']
+        //         ],
+        //         "team_name" => [
+        //             ['regex', '/^[A-Za-z]{2,30}(?: [A-Za-z]{2,30})*$/']
+        //         ],
+        //         "coach_id" => [
+        //             'integer',
+        //             ['min', '1'],
+        //             [function() use ($team) {
+        //                 return !count($this->teamsModel->checkCoachIDExists((int)$team["coach_id"])) == 0;
+        //             }, 'does not exist!'],
+        //             [function() use ($team) {
+        //                 return !$this->teamsModel->checkCoachIDInUse((int)$team["coach_id"]);
+        //             }, 'is already in use!']
+        //         ],
+        //         "arena_id" => [
+        //             'integer',
+        //             ['min', '1'],
+        //             [function() use ($team) {
+        //                 return !count($this->teamsModel->checkArenaIDExists((int)$team["arena_id"])) == 0;
+        //             }, 'does not exist!'],
+        //             [function() use ($team) {
+        //                 return !$this->teamsModel->checkArenaIDInUse((int)$team["arena_id"]);
+        //             }, 'is already in use!']
+        //         ],
+        //         "founding_year" => [
+        //             'integer',
+        //             ['min', '1800'],
+        //             ['max', date('Y')]
+        //         ],
+        //         "championships" => [
+        //             'integer',
+        //             ['min', '0']
+        //         ],
+        //         "general_manager" => [
+        //             ['regex', '/^[A-Za-z\s\'\-]+$/']
+        //         ],
+        //         "abbreviation" => [
+        //             ['length', 3],
+        //             ['regex', '/^[A-Z]{3}$/']
+        //         ]
+        //     );
+
+        //     //* Batch Validate and Insert
+        //     $validator = new Validator($team, [], 'en');
+        //     $validator->mapFieldsRules($rules);
+
+        //     //* Invalid HTTP Response Message
+        //     if (!$validator->validate()) {
+        //         $errors[$index] = $validator->errors();
+        //     }
+        // }
+
+        // //* Result Pattern
+        // //* Unsuccessful
+        // if (!empty($errors)) {
+        //     return Result::failure("Some team(s) failed validation.", $errors);
+        // }
+        // //* Successful
+        // else {
+        //     //* Insert new resource into model
+        //     foreach($teams as $index => $team) {
+        //         $updateIDs[$index] = $this->teamsModel->insertTeams($team);
+        //     }
+        //     return Result::success("Team(s) were successfully inserted!", $updateIDs);
+        // }
+    }
+
+    /**
+     * Handles deleting team(s) into database.
+     *
+     * @param array $teams The incoming data to delete.
+     *
+     * @return Result JSON response to encapsulate and return the result of Delete Operation.
+     *
+     */
+    function deleteTeams(array $teams) : Result
+    {
+        $deletedTeams = [];
+        $errors = [];
+
+        //* Validate Received Data
+        //! Check if empty
+        if (empty($teams)) {
+            return Result::failure("No team(s) were provided for deleting.");
+        }
+
+        //* Convert team_id fields to string to avoid bccomp() error
+        $numericFields = ["team_id"];
+        foreach($teams as $index => $team) {
+            foreach ($numericFields as $field) {
+                if (isset($team[$field])) {
+                    $team[$field] = (string)$team[$field];
+                }
+            }
+
+            //* Validator Rules
+            $rules = array(
+                "team_id" => [
+                    'required',
+                    'integer',
+                    ['min', '1']
+                ]
+            );
+
+            //* Batch Validate and Delete
+            $validator = new Validator($team, [], 'en');
+            $validator->mapFieldsRules($rules);
+
+            //* Invalid HTTP Response Message
+            if (!$validator->validate()) {
+                $errors[$index] = $validator->errors();
+            }
+        }
+
+        //* Result Pattern
+        //* Unsuccessful
+        if (!empty($errors)) {
+            return Result::failure("Some team(s) failed validation.", $errors);
+        }
+        //* Successful
+        else {
+            //* Delete resource into model
+            foreach($teams as $index => $team) {
+                $deletedTeams[$index] = $this->teamsModel->getTeamByID((int)$team['team_id']);
+                $this->teamsModel->deleteTeamById((int)$team['team_id']);
+            }
+
+            return Result::success("Team(s) were successfully inserted!", $deletedTeams);
         }
     }
 }
