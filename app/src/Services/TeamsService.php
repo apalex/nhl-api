@@ -174,7 +174,7 @@ class TeamsService
                         return !count($this->teamsModel->checkCoachIDExists((int)$team["coach_id"])) == 0;
                     }, 'does not exist!'],
                     [function() use ($team) {
-                        return !$this->teamsModel->checkCoachIDInUse((int)$team["coach_id"]);
+                        return !$this->teamsModel->checkCoachIDInUseUpdate((int)$team["coach_id"], (int)$team['team_id']);
                     }, 'is already in use!']
                 ],
                 "arena_id" => [
@@ -184,7 +184,7 @@ class TeamsService
                         return !count($this->teamsModel->checkArenaIDExists((int)$team["arena_id"])) == 0;
                     }, 'does not exist!'],
                     [function() use ($team) {
-                        return !$this->teamsModel->checkArenaIDInUse((int)$team["arena_id"]);
+                        return !$this->teamsModel->checkArenaIDInUseUpdate((int)$team["arena_id"], (int)$team['team_id']);
                     }, 'is already in use!']
                 ],
                 "founding_year" => [
