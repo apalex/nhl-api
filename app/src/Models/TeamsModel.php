@@ -248,7 +248,7 @@ class TeamsModel extends BaseModel
      *
      * @return bool Returns true if the arena ID is already in use, else false.
      */
-    public function checkArenaIDInUse(int $arena_id)
+    public function checkArenaIDInUse(int $arena_id) : bool
     {
 
         //* SQL Query
@@ -256,6 +256,18 @@ class TeamsModel extends BaseModel
 
         //* If COUNT > 0, then arena_id is already in use
         return $this->fetchSingle($sql, ['arena_id' => $arena_id])["COUNT(*)"] > 0;
+    }
+
+    /**
+     * Updates a team by its ID.
+     *
+     * @param string $team_id The ID of the team to update.
+     *
+     * @return void
+     */
+    public function updateTeams(array $teams, int $team_id) : void
+    {
+        $this->update("teams", $teams, ["team_id" => $team_id]);
     }
 
     /**

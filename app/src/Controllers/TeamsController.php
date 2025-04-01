@@ -263,7 +263,7 @@ class TeamsController extends BaseController
             ];
             $payload = [
                 "status" => $status,
-                "team(s)" => $team_info
+                "team(s)" => $result->getData()
             ];
             return $this->renderJson($response, $payload, 200);
         }
