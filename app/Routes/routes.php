@@ -77,4 +77,13 @@ return static function (Slim\App $app): void {
     $app->delete('/teams', [TeamsController::class, 'handleDeleteTeams']);
 
     $app->delete('/games', [GamesController::class, 'handleDeleteGame']);
+
+
+    $app->group('/arenas', function () use ($app) {
+        $app->post('', '\\App\\Controllers\\ArenasController:create');
+        $app->put('/{id}', '\\App\\Controllers\\ArenasController:update');
+        $app->delete('/{id}', '\\App\\Controllers\\ArenasController:delete');
+    });
 };
+
+

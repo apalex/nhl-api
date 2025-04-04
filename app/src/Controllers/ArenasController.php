@@ -320,4 +320,43 @@ class ArenasController extends BaseController
             throw new HttpInvalidInputException($request, "No matching record for arena games found.");
         }
     }
+    public function create(Request $request, Response $response, $args): Response
+{
+    $data = $request->getParsedBody();
+    $service = new ArenasService($this->db);
+    $result = $service->create($data);
+
+    if (!$result->isSuccess()) {
+        throw new HttpInvalidInputException(json_encode($result->getData()));
+    }
+
+    return $this->respondWithData($response, $result->getData(), 201);
+}
+
+public function update(Request $request, Response $response, $args): Response
+{
+    $id = (int)$args['id'];
+    $data = $request->getParsedBody();
+    $service = new ArenasService($this->db);
+    $result = $service->update($id, $data);
+
+    if (!$result->isSuccess()) {
+        throw new HttpInvalidInputException(json_encode($result->getData()));
+    }
+
+    return $this->respondWithData($response, $result->getData());
+}
+
+public function delete(Request $request, Response $response, $args): Response
+{
+    $id = (int)$args['id'];
+    $service = new ArenasService($this->db);
+    $result = $service->delete($id);
+
+    if ($result->getData()['deleted'] === 0) {
+        return $this->respondWithError($response, "Arena not found", 404);
+    }
+
+    return $this->respondWithData($response, $result->getData());
+}
 }
