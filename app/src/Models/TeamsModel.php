@@ -248,7 +248,7 @@ class TeamsModel extends BaseModel
      *
      * @return bool Returns true if the arena ID is already in use, else false.
      */
-    public function checkArenaIDInUse(int $arena_id) : bool
+    public function checkArenaIDInUse(int $arena_id)
     {
 
         //* SQL Query
@@ -265,9 +265,48 @@ class TeamsModel extends BaseModel
      *
      * @return void
      */
-    public function updateTeams(array $teams, int $team_id) : void
+    public function updateTeams(array $teams, int $team_id): void
     {
+        //* Delete Team_ID from teams array to allow update
+        unset($teams["team_id"]);
+
         $this->update("teams", $teams, ["team_id" => $team_id]);
+    }
+
+    /**
+     * Checks if a given coach ID is already assigned to a different team.
+     *
+     * @param int $coach_id The ID of the coach to check.
+     * @param int $team_id  The ID of the team being updated.
+     *
+     * @return bool Returns true if the coach ID is already in use in another team, else false.
+     */
+    public function checkCoachIDInUseUpdate(int $coach_id, int $team_id)
+    {
+
+        //* SQL Query
+        $sql = "SELECT COUNT(*) FROM teams WHERE coach_id = :coach_id AND team_id != :team_id";
+
+        //* If COUNT > 0, then coach_id is already in use
+        return $this->fetchSingle($sql, ['coach_id' => $coach_id, 'team_id' => $team_id])["COUNT(*)"] > 0;
+    }
+
+   /**
+     * Checks if a given arena ID is already assigned to a different team.
+     *
+     * @param int $arena_id The ID of the arena to check.
+     * @param int $team_id  The ID of the team being updated.
+     *
+     * @return bool Returns true if the arena ID is already in use in another team, else false.
+     */
+    public function checkArenaIDInUseUpdate(int $arena_id, int $team_id)
+    {
+
+        //* SQL Query
+        $sql = "SELECT COUNT(*) FROM teams WHERE arena_id = :arena_id AND team_id != :team_id";
+
+        //* If COUNT > 0, then arena_id is already in use
+        return $this->fetchSingle($sql, ['arena_id' => $arena_id, 'team_id' => $team_id])["COUNT(*)"] > 0;
     }
 
     /**
@@ -277,7 +316,7 @@ class TeamsModel extends BaseModel
      *
      * @return void
      */
-    public function deleteTeamById(int $team_id) : bool
+    public function deleteTeamById(int $team_id): bool
     {
         //* DELETE
         $result = $this->delete("teams", ["team_id" => $team_id]);
