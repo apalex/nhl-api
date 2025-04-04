@@ -28,24 +28,14 @@ class ArenasController extends BaseController
      */
     public function handleGetArenas(Request $request, Response $response): Response
     {
+        // Validate HTTP Method Sent
+        $this->validateHTTPMethod($request);
+
         // Extract query parameters (filters)
         $filters = $request->getQueryParams();
 
-        // Validate Pagination
-        if (isset($filters['page']) && !is_numeric($filters['page'])) {
-            throw new HttpInvalidInputException($request, "The 'page' parameter must be a valid number.");
-        }
-
-        if (isset($filters['page_size']) && !is_numeric($filters['page_size'])) {
-            throw new HttpInvalidInputException($request, "The 'page_size' parameter must be a valid number.");
-        }
-
-        if (isset($filters["page"]) && isset($filters["page_size"])) {
-            $this->arenas_model->setPaginationOptions(
-                $filters["page"],
-                $filters["page_size"]
-            );
-        }
+        //* Validate Pagination
+        $this->validatePagination($request);
 
         // Validate Sorting
         if (isset($filters['sort_by'])) {
@@ -62,21 +52,31 @@ class ArenasController extends BaseController
             $this->validateArenaName($filters['arena_name'], $request);
         }
 
+        // Validate Year Built
+        if (isset($filters['year_built'])) {
+            $this->validateArenaName($filters['year_built'], $request);
+        }
+        // Validate Arena Capacity
+        if (isset($filters['capacity'])) {
+            $this->validateArenaName($filters['capacity'], $request);
+        }
         // Retrieve the list of arenas
         $arenas = $this->arenas_model->getArenas($filters);
 
         // Validate Arena Data
         $this->validateArenaInfo($arenas, $request);
 
-        // Return JSON response
-        return $this->renderJson($response, [
-            "status" => array(
-                "type" => "successful",
-                "code" => 200,
-                "message" => "Team details fetched successfully",
-            ),
-            "team" => $arenas
-        ]);
+        //* Valid HTTP Response Model
+        $status = array(
+            "Type" => "successful",
+            "Code" => 200,
+            "Content-Type" => "application/json",
+            "Message" => "Arenas fetched successfully",
+        );
+        $arenas["status"] = $status;
+        $arenas = array_reverse($arenas);
+
+        return $this->renderJson($response, $arenas);
     }
 
     /**
@@ -89,29 +89,37 @@ class ArenasController extends BaseController
      */
     public function  handleGetArenaByID(Request $request, Response $response, array $uri_args): Response
     {
+        // Validate HTTP Method Sent
+        $this->validateHTTPMethod($request);
+
         // Extract and validate arena_id
         $arena_id = $uri_args["arena_id"];
 
         if (!ctype_digit($arena_id)) {
-            throw new HttpInvalidIDException($request, "The provided arena ID is invalid!");
+            throw new HttpInvalidIDException($request, "The provided arena ID is invalid. Expected Format: int|number");
         }
 
         // Retrieve the arena details
-        $arena_info = $this->arenas_model->getArenaByID($arena_id);
+        $arena = $this->arenas_model->getArenaByID($arena_id);
 
         // Validate Arena
-        if (!$arena_info) {
-            throw new HttpNotFoundException($request, "The provided arena ID was not found!");
+        if (!$arena) {
+            throw new HttpNotFoundException($request, "No matching record for arena info found.");
         }
 
-        return $this->renderJson($response, [
-            "status" => array(
-                "type" => "successful",
-                "code" => 200,
-                "message" => "Team details fetched successfully",
-            ),
-            "team" => $arena_info
-        ]);
+        //* Valid HTTP Response Model
+        return $this->renderJson(
+            $response,
+            [
+                "status" => array(
+                    "Type" => "successful",
+                    "Code" => 200,
+                    "Content-Type" => "application/json",
+                    "Message" => "Arena details fetched successfully",
+                ),
+                "arena" => $arena
+            ]
+        );
     }
 
     /**
@@ -122,26 +130,51 @@ class ArenasController extends BaseController
      * @param array $uri_args Route arguments containing team ID.
      * @return Response The JSON response containing related arenas.
      */
-    public function handleArenasByTeamID(Request $request, Response $response, array $uri_args): Response
+    public function handleGetArenaGames(Request $request, Response $response, array $uri_args): Response
     {
-        $team_id = $uri_args['team_id'];
 
-        // Validate Team ID
-        if (!ctype_digit($team_id)) {
-            throw new HttpInvalidInputException($request, "Invalid team_id. It must be a numeric value.");
+        // Validate HTTP Method Sent
+        $this->validateHTTPMethod($request);
+
+        $arena_id = $uri_args['arena_id'];
+
+        $filters = $request->getQueryParams();
+
+        //* Validate Pagination
+        $this->validatePagination($request);
+
+        // Validate Arena ID
+        if (!ctype_digit($arena_id)) {
+            throw new HttpInvalidInputException($request, "Invalid arena_id. It must be a numeric value.");
         }
 
-        $arenas = $this->arenas_model->getArenas(["team_id" => $team_id]);
+        //Validate Game Type
+        if (isset($filters['game_type'])) {
+            $game_type = $filters['game_type'];
+            $this->validateGameType($game_type, $request);
+        }
+
+        $arena_info = $this->arenas_model->getGamesByArenaId($arena_id, $filters);
+
+        //* Call Validate Player Info
+        $this->validateArenaGame($arena_info, $request);
 
         return $this->renderJson($response, [
-            "status" => "success",
-            "team_id" => $team_id,
-            "arenas" => $arenas
+            "status" => array(
+                "Type" => "successful",
+                "Code" => 200,
+                "Content-Type" => "application/json",
+                "Message" => "Arena games fetched successfully",
+            ),
+            "details" => $arena_info
         ]);
     }
 
     /**
      * Validates the sorting parameter.
+     *
+     * @param string $sortBy Sorts the allowed fields
+     * @param Request $request The HTTP request.
      */
     private function validateSortBy(string $sortBy, Request $request)
     {
@@ -151,8 +184,13 @@ class ArenasController extends BaseController
         }
     }
 
-    /**
+     /**
      * Validates the order parameter.
+     *
+     * @param string $orderBy The sorting order to validate.
+     * @param Request $request The HTTP request.
+     *
+     * @throws HttpInvalidInputException If the order parameter is not valid.
      */
     private function validateOrderBy(string $orderBy, Request $request)
     {
@@ -163,7 +201,31 @@ class ArenasController extends BaseController
     }
 
     /**
+    * Validates the game type format.
+    *
+    * @param string $game_type The game type to validate.
+    * @param Request $request The HTTP request.
+    *
+    * @throws HttpInvalidInputException If the game type is not valid.
+    */
+     private function validateGameType(mixed $game_type, Request $request)
+     {
+
+         $allowed = ['regular', 'playoffs', 'preseason'];
+
+         if (!in_array($game_type, $allowed)) {
+             //! provided sort filter invalid
+             throw new HttpInvalidInputException($request, "The provided game type is invalid. Expected input: ['regular', 'playoffs', 'preseason']");
+         }
+     }
+
+    /**
      * Validates the arena name format.
+     *
+     * @param string $arenaName The arena name to validate.
+     * @param Request $request The HTTP request.
+     *
+     * @throws HttpInvalidInputException If the arena name contains invalid characters or is empty.
      */
     private function validateArenaName(string $arenaName, Request $request)
     {
@@ -174,11 +236,127 @@ class ArenasController extends BaseController
 
     /**
      * Validates if arena data is available.
+     *
+     * @param array $arenas The array containing arena data.
+     * @param Request $request The HTTP request.
+     *
+     * @throws HttpInvalidInputException If no matching arena records are found.
      */
-    private function validateArenaInfo($arenas, Request $request)
+    private function validateArenaInfo(array $arenas, Request $request)
     {
         if (count($arenas['data']) <= 0) {
             throw new HttpInvalidInputException($request, "No matching record for arenas found.");
         }
     }
+
+
+    /**
+     * Validates the provided pagination details.
+     *
+     * @param Request $request The request object for error handling.
+     *
+     * @throws HttpInvalidInputException If the pagination is not valid.
+     */
+    private function validatePagination(Request $request)
+    {
+        $filters = $request->getQueryParams();
+
+        // Check if page or page_size is present in URI
+        if (isset($filters['page']) || isset($filters['page_size'])) {
+            if (!isset($filters['page'])) {
+                //! page must be present in the URI
+                throw new HttpInvalidInputException($request, "The 'page' parameter must be present in the URI.");
+            }
+            if (!isset($filters['page_size'])) {
+                //! page_size must be present in the URI
+                throw new HttpInvalidInputException($request, "The 'page_size' parameter must be present in the URI.");
+            }
+        }
+
+        // Check if page parameter is a number
+        if (isset($filters['page']) && !is_numeric($filters['page'])) {
+            //! provided page invalid
+            throw new HttpInvalidInputException($request, "The 'page' parameter must be a valid number.");
+        }
+
+        // Check if page_size parameter is a number
+        if (isset($filters['page_size']) && !is_numeric($filters['page_size'])) {
+            //! provided page size invalid
+            throw new HttpInvalidInputException($request, "The 'page_size' parameter must be a valid number.");
+        }
+
+        // Check if page parameter is greater than zero
+        if (isset($filters['page']) && $filters['page'] < 1) {
+            //! provided page must be greater than zero
+            throw new HttpInvalidInputException($request, "The 'page' parameter must be greater than zero.");
+        }
+
+        // Check if page_size parameter is greater than zero
+        if (isset($filters['page_size']) && $filters['page_size'] < 1) {
+            //! provided page_size number must be greater than zero
+            throw new HttpInvalidInputException($request, "The 'page_size' parameter must be greater than zero or must be present in the URI.");
+        }
+
+        // Check if page and page_size parameters are present inside URI
+        if (isset($filters['page']) && isset($filters['page_size'])) {
+            $this->arenas_model->setPaginationOptions($filters['page'], $filters['page_size']);
+        }
+
+        // Check if page or page_size is bigger than current amount in database
+    }
+
+    /**
+     * Validates if arena game information is available.
+     *
+     * @param mixed $arena_info The arena game information to validate.
+     * @param Request $request The HTTP request.
+     *
+     * @throws HttpInvalidInputException If no arena game record is found.
+     */
+    private function validateArenaGame($arena_info, Request $request)
+    {
+        if (count($arena_info['games']) <= 0) {
+            //! no matching record in the db
+            throw new HttpInvalidInputException($request, "No matching record for arena games found.");
+        }
+    }
+    public function create(Request $request, Response $response, $args): Response
+{
+    $data = $request->getParsedBody();
+    $service = new ArenasService($this->db);
+    $result = $service->create($data);
+
+    if (!$result->isSuccess()) {
+        throw new HttpInvalidInputException(json_encode($result->getData()));
+    }
+
+    return $this->respondWithData($response, $result->getData(), 201);
+}
+
+public function update(Request $request, Response $response, $args): Response
+{
+    $id = (int)$args['id'];
+    $data = $request->getParsedBody();
+    $service = new ArenasService($this->db);
+    $result = $service->update($id, $data);
+
+    if (!$result->isSuccess()) {
+        throw new HttpInvalidInputException(json_encode($result->getData()));
+    }
+
+    return $this->respondWithData($response, $result->getData());
+}
+
+public function delete(Request $request, Response $response, $args): Response
+{
+    $id = (int)$args['id'];
+    $service = new ArenasService($this->db);
+    $result = $service->delete($id);
+
+    if ($result->getData()['deleted'] === 0) {
+        return $this->respondWithError($response, "Arena not found", 404);
+    }
+
+    return $this->respondWithData($response, $result->getData());
+}
 }

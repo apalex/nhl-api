@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Core\AppSettings;
 use App\Exceptions\HttpInvalidIDException;
 use App\Exceptions\HttpInvalidInputException;
+use App\Services\TeamsService;
 use App\Models\TeamsModel;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -21,8 +22,11 @@ class TeamsController extends BaseController
      * TeamsController constructor
      *
      * @param TeamsModel $teamsModel The teams model instance.
+     * @param TeamsService $teamsService The teams service instance.
      */
-    public function __construct(private TeamsModel $teamsModel) {}
+    public function __construct(private TeamsModel $teamsModel, private TeamsService $teamsService) {}
+
+    //* ROUTE: GET /teams
 
     /**
      * Handles retrieving a list of teams with optional filtering, sorting, and pagination.
@@ -36,6 +40,9 @@ class TeamsController extends BaseController
      */
     public function handleGetTeams(Request $request, Response $response, array $uri_args): Response
     {
+        //* Validate HTTP Method Sent
+        $this->validateHTTPMethod($request);
+
         $filters = $request->getQueryParams();
 
         //* Validate Pagination
@@ -61,6 +68,15 @@ class TeamsController extends BaseController
         //* Validate Team Info
         $this->validateTeamInfo($teams, $request);
 
+        //* Valid HTTP Response Model
+        $status = array(
+            "Type" => "successful",
+            "Code" => 200,
+            "Content-Type" => "application/json",
+            "Message" => "Teams fetched successfully",
+        );
+        $teams["status"] = $status;
+        $teams = array_reverse($teams);
         return $this->renderJson($response, $teams);
     }
 
@@ -77,6 +93,9 @@ class TeamsController extends BaseController
      */
     public function handleGetTeamByID(Request $request, Response $response, array $uri_args): Response
     {
+        //* Validate HTTP Method Sent
+        $this->validateHTTPMethod($request);
+
         $team_id = $uri_args['team_id'];
 
         //* Validate Team ID
@@ -87,7 +106,19 @@ class TeamsController extends BaseController
         //* Validate Team
         $this->validateTeam($team_info, $request);
 
-        return $this->renderJson($response, $team_info);
+        //* Valid HTTP Response Model
+        return $this->renderJson(
+            $response,
+            [
+                "status" => array(
+                    "Type" => "successful",
+                    "Code" => 200,
+                    "Content-Type" => "application/json",
+                    "Message" => "Team details fetched successfully",
+                ),
+                "team" => $team_info
+            ]
+        );
     }
 
     /**
@@ -103,6 +134,9 @@ class TeamsController extends BaseController
      */
     public function handleGetTeamGames(Request $request, Response $response, array $uri_args): Response
     {
+        //* Validate HTTP Method Sent
+        $this->validateHTTPMethod($request);
+
         $team_id = $uri_args['team_id'];
 
         //* Validate Team ID
@@ -136,7 +170,168 @@ class TeamsController extends BaseController
         //* Call Validate Player Info
         $this->validateTeamGame($team_info, $request);
 
-        return $this->renderJson($response, $team_info);
+        return $this->renderJson($response, [
+            "status" => array(
+                "Type" => "successful",
+                "Code" => 200,
+                "Content-Type" => "application/json",
+                "Message" => "Team games fetched successfully",
+            ),
+            "details" => $team_info
+        ]);
+    }
+
+    //* ROUTE: POST /teams
+
+    /**
+     * Handles inserting team(s) into database.
+     *
+     * @param Request $request The incoming HTTP request.
+     * @param Response $response The outgoing HTTP response.
+     *
+     * @return Response JSON response containing HTTP response to the request.
+     */
+    public function handlePostTeams(Request $request, Response $response): Response
+    {
+        //* Validate HTTP Method Sent
+        $this->validateHTTPMethod($request, ['POST']);
+
+        //* Fetch Body
+        $team_info = $request->getParsedBody();
+
+        //* Send Body to Service
+        $result = $this->teamsService->createTeams($team_info);
+
+        //* Valid HTTP Response Message Structure
+        if ($result->isSuccess()) {
+            $status = [
+                "Type" => "successful",
+                'Code' => 201,
+                "Content-Type" => "application/json",
+                'Message' => $result->getMessage()
+            ];
+            $payload = [
+                "status" => $status,
+                "team(s)" => $result->getData()
+            ];
+            return $this->renderJson($response, $payload, 201);
+        }
+        //* Invalid HTTP Response Message Structure
+        else {
+            $status = [
+                "Type" => "error",
+                'Code' => 422,
+                'Content-Type' => 'application/json',
+                'Message' => $result->getMessage()
+            ];
+            $payload = [
+                "status" => $status,
+                "details" => $result->getErrors()
+            ];
+            return $this->renderJson($response, $payload, 422);
+        }
+    }
+
+    //* ROUTE: PUT /teams
+
+    /**
+     * Handles updating team(s) into database.
+     *
+     * @param Request $request The incoming HTTP request.
+     * @param Response $response The outgoing HTTP response.
+     *
+     * @return Response JSON response containing HTTP response to the request.
+     */
+    public function handlePutTeams(Request $request, Response $response): Response
+    {
+        //* Validate HTTP Method Sent
+        $this->validateHTTPMethod($request, ['PUT']);
+
+        //* Fetch Body
+        $team_info = $request->getParsedBody();
+
+        //* Send Body to Service
+        $result = $this->teamsService->updateTeams($team_info);
+
+        //* Valid HTTP Response Message Structure
+        if ($result->isSuccess()) {
+            $status = [
+                "Type" => "successful",
+                'Code' => 200,
+                "Content-Type" => "application/json",
+                'Message' => $result->getMessage()
+            ];
+            $payload = [
+                "status" => $status,
+                "team(s)" => $result->getData()
+            ];
+            return $this->renderJson($response, $payload, 200);
+        }
+        //* Invalid HTTP Response Message Structure
+        else {
+            $status = [
+                "Type" => "error",
+                'Code' => 422,
+                'Content-Type' => 'application/json',
+                'Message' => $result->getMessage()
+            ];
+            $payload = [
+                "status" => $status,
+                "details" => $result->getErrors()
+            ];
+            return $this->renderJson($response, $payload, 422);
+        }
+    }
+
+    //* ROUTE: DELETE /teams
+
+    /**
+     * Handles deleting team(s) into database.
+     *
+     * @param Request $request The incoming HTTP request.
+     * @param Response $response The outgoing HTTP response.
+     *
+     * @return Response JSON response containing HTTP response to the request.
+     */
+    public function handleDeleteTeams(Request $request, Response $response): Response
+    {
+        //* Validate HTTP Method Sent
+        $this->validateHTTPMethod($request, ['DELETE']);
+
+        //* Fetch Body
+        $team_info = $request->getParsedBody();
+
+        //* Send Body to Service
+        $result = $this->teamsService->deleteTeams($team_info);
+
+        //* Valid HTTP Response Message Structure
+        if ($result->isSuccess()) {
+            $status = [
+                "Type" => "successful",
+                'Code' => 200,
+                "Content-Type" => "application/json",
+                'Message' => $result->getMessage()
+            ];
+            $payload = [
+                "status" => $status,
+                "team(s)" => $result->getData()
+            ];
+            return $this->renderJson($response, $payload, 200);
+        }
+        //* Invalid HTTP Response Message Structure
+        else {
+            $status = [
+                "Type" => "error",
+                'Code' => 422,
+                'Content-Type' => 'application/json',
+                'Message' => $result->getMessage()
+            ];
+            $payload = [
+                "status" => $status,
+                "details" => $result->getErrors()
+            ];
+            return $this->renderJson($response, $payload, 422);
+        }
     }
 
     /**
@@ -254,6 +449,18 @@ class TeamsController extends BaseController
     {
         $filters = $request->getQueryParams();
 
+        // Check if page or page_size is present in URI
+        if (isset($filters['page']) || isset($filters['page_size'])) {
+            if (!isset($filters['page'])) {
+                //! page must be present in the URI
+                throw new HttpInvalidInputException($request, "The 'page' parameter must be present in the URI.");
+            }
+            if (!isset($filters['page_size'])) {
+                //! page_size must be present in the URI
+                throw new HttpInvalidInputException($request, "The 'page_size' parameter must be present in the URI.");
+            }
+        }
+
         // Check if page parameter is a number
         if (isset($filters['page']) && !is_numeric($filters['page'])) {
             //! provided page invalid
@@ -266,10 +473,24 @@ class TeamsController extends BaseController
             throw new HttpInvalidInputException($request, "The 'page_size' parameter must be a valid number.");
         }
 
+        // Check if page parameter is greater than zero
+        if (isset($filters['page']) && $filters['page'] < 1) {
+            //! provided page must be greater than zero
+            throw new HttpInvalidInputException($request, "The 'page' parameter must be greater than zero.");
+        }
+
+        // Check if page_size parameter is greater than zero
+        if (isset($filters['page_size']) && $filters['page_size'] < 1) {
+            //! provided page_size number must be greater than zero
+            throw new HttpInvalidInputException($request, "The 'page_size' parameter must be greater than zero or must be present in the URI.");
+        }
+
         // Check if page and page_size parameters are present inside URI
         if (isset($filters['page']) && isset($filters['page_size'])) {
             $this->teamsModel->setPaginationOptions($filters['page'], $filters['page_size']);
         }
+
+        // Check if page or page_size is bigger than current amount in database
     }
 
     /**

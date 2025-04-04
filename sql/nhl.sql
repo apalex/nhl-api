@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Mar 12, 2025 at 05:37 PM
+-- Generation Time: Mar 25, 2025 at 05:30 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -42,13 +42,13 @@ CREATE TABLE `arenas` (
 --
 
 INSERT INTO `arenas` (`arena_id`, `arena_name`, `year_built`, `capacity`, `city`, `province`, `team_id`) VALUES
-(1, 'Scotiabank Arena', 1999, 19800, NULL, 'Ontario', 1),
-(2, 'Bell Centre', 1996, 21273, NULL, 'Quebec', 2),
-(3, 'TD Garden', 1995, 19700, NULL, 'Massachusetts', 3),
-(4, 'United Center', 1994, 23500, NULL, 'Illinois', 4),
-(5, 'Little Caesars Arena', 2017, 20000, NULL, 'Michigan', 5),
-(6, 'Madison Square Garden', 1968, 18100, NULL, 'New York', 6),
-(7, 'Rogers Place', 2016, 18500, NULL, 'Alberta', 7);
+(1, 'Scotiabank Arena', 1999, 19800, 'Toronto', 'Ontario', 1),
+(2, 'Bell Centre', 1996, 21273, 'Montreal', 'Quebec', 2),
+(3, 'TD Garden', 1995, 19700, 'Boston', 'Massachusetts', 3),
+(4, 'United Center', 1994, 23500, 'Chicago', 'Illinois', 4),
+(5, 'Little Caesars Arena', 2017, 20000, 'Detroit', 'Michigan', 5),
+(6, 'Madison Square Garden', 1968, 18100, 'New York', 'New York', 6),
+(7, 'Rogers Place', 2016, 18500, 'Edmonton', 'Alberta', 7);
 
 -- --------------------------------------------------------
 

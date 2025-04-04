@@ -62,4 +62,28 @@ return static function (Slim\App $app): void {
     $app->get('/error', function (Request $request, Response $response, $args) {
         throw new \Slim\Exception\HttpNotFoundException($request, "Something went wrong");
     });
+
+    //* ROUTE: POST
+    $app->post('/teams', [TeamsController::class, 'handlePostTeams']);
+
+    $app->post('/games', [GamesController::class, 'handleCreateGame']);
+
+    //* ROUTE: PUT
+    $app->put('/teams', [TeamsController::class, 'handlePutTeams']);
+
+    $app->put('/games', [GamesController::class, 'handleUpdateGame']);
+
+    //* ROUTE: DELETE
+    $app->delete('/teams', [TeamsController::class, 'handleDeleteTeams']);
+
+    $app->delete('/games', [GamesController::class, 'handleDeleteGame']);
+
+
+    $app->group('/arenas', function () use ($app) {
+        $app->post('', '\\App\\Controllers\\ArenasController:create');
+        $app->put('/{id}', '\\App\\Controllers\\ArenasController:update');
+        $app->delete('/{id}', '\\App\\Controllers\\ArenasController:delete');
+    });
 };
+
+

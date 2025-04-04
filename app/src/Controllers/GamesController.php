@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Exceptions\HttpInvalidIDException;
 use App\Exceptions\HttpInvalidInputException;
 use App\Models\GamesModel;
+use App\Services\GamesService;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Exception\HttpNotFoundException;
@@ -16,8 +17,9 @@ class GamesController extends BaseController
 {
     /**
      * @var GamesModel $games_model The model handling game data.
+     * @var GamesService $games_service The service that handles validations.
      */
-    public function __construct(private GamesModel $games_model) {}
+    public function __construct(private GamesModel $games_model, private GamesService $games_service) {}
 
     /**
      * Handles requests to retrieve multiple games with optional filters.
@@ -27,28 +29,13 @@ class GamesController extends BaseController
      * @return Response The JSON response containing game data.
      */
     public function handleGetGames(Request $request, Response $response): Response
-    {
+    {   // Validate HTTP Method Sent
+        $this->validateHTTPMethod($request);
         //? Step 1 - Extract the list of filters.
         $filters = $request->getQueryParams();
 
-        // Check if page parameter is a number
-        if (isset($filters['page']) && !is_numeric($filters['page'])) {
-            //! provided page invalid
-            throw new HttpInvalidInputException($request, "The 'page' parameter must be a valid number.");
-        }
-
-        // Check if page_size parameter is a number
-        if (isset($filters['page_size']) && !is_numeric($filters['page_size'])) {
-            //! provided page size invalid
-            throw new HttpInvalidInputException($request, "The 'page_size' parameter must be a valid number.");
-        }
-
-        if (isset($filters["page"]) && isset($filters["page_size"])) {
-            $this->games_model->setPaginationOptions(
-                $filters["page"],
-                $filters["page_size"]
-            );
-        }
+        //* Validate Pagination
+        $this->validatePagination($request);
 
         // Validate Sort By
         if (isset($filters['sort_by'])) {
@@ -78,8 +65,167 @@ class GamesController extends BaseController
         // Validate Game Info
         $this->validateGameInfo($games, $request);
 
-        //? Step 3 - Return the JSON response.
+        //* Valid HTTP Response Model
+        $status = array(
+            "Type" => "successful",
+            "Code" => 200,
+            "Content-Type" => "application/json",
+            "Message" => "Games fetched successfully",
+        );
+        $games["status"] = $status;
+        $games = array_reverse($games);
         return $this->renderJson($response, $games);
+    }
+
+    /**
+     * Handles POST requests to create a new game record.
+     *
+     * Validates the JSON input, sends the data to the service for processing,
+     * and returns a structured JSON response with status and inserted data.
+     *
+     * @param Request $request The incoming HTTP request.
+     * @param Response $response The outgoing HTTP response.
+     *
+     * @return Response The JSON response containing creation status and game data.
+     */
+    public function handleCreateGame(Request $request, Response $response): Response
+    {
+        //? Validate HTTP Method
+        $this->validateHTTPMethod($request, ["POST"]);
+
+        //? Step 1 - Retrieve body from request and encase it
+        $body = $request->getParsedBody();
+        if (is_array($body) && isset($body[0]) && is_array($body[0])) {
+            $body = $body[0];
+        }
+
+        //? Step 2 - Retrieve Game Service class and call createGame
+        $result = $this->games_service->createGame($body);
+
+        //? Step 3 - Make valid http error response
+        if (!$result->isSuccess()) {
+            return $this->renderJson($response, [
+                "status" => [
+                    "Type" => "error",
+                    "Code" => 422,
+                    "Content-Type" => "application/json",
+                    "Message" => $result->getMessage(),
+                    "Errors" => $result->getErrors(),
+                ]
+            ], 422);
+        }
+
+        //? Step 4 - Return Response
+        return $this->renderJson($response, [
+            "status" => [
+                "Type" => "successful",
+                "Code" => 201,
+                "Content-Type" => "application/json",
+                "Message" => $result->getMessage(),
+            ],
+            "data" => $result->getData()
+        ], 201);
+    }
+
+    /**
+     * Handles PUT requests to update a game by ID.
+     *
+     * @param Request $request The incoming HTTP request.
+     * @param Response $response The outgoing HTTP response.
+     * @return Response The JSON response indicating update result.
+     */
+    public function handleUpdateGame(Request $request, Response $response): Response
+    {
+        //? Validate HTTP Method
+        $this->validateHTTPMethod($request, ["PUT"]);
+
+        //? Step 1 - Retrieve body from request and encase it
+        $body = $request->getParsedBody();
+        if (is_array($body) && isset($body[0]) && is_array($body[0])) {
+            $body = $body[0];
+        }
+
+        //? Step 2 - Retrieve Game Service class and call updateGame
+        $result = $this->games_service->updateGame($body);
+
+        //? Step 3 - Make valid http error response
+        if (!$result->isSuccess()) {
+            $code = str_contains(strtolower($result->getMessage()), 'Not Found') ? 404 : 422;
+
+            return $this->renderJson($response, [
+                "status" => [
+                    "Type" => "error",
+                    "Code" => $code,
+                    "Content-Type" => "application/json",
+                    "Message" => $result->getMessage(),
+                    "Errors" => $result->getErrors(),
+                ]
+            ], $code);
+        }
+
+        //? Step 4 - Return response
+        return $this->renderJson($response, [
+            "status" => [
+                "Type" => "successful",
+                "Code" => 200,
+                "Content-Type" => "application/json",
+                "Message" => $result->getMessage(),
+            ],
+            "data" => $result->getData()
+        ], 200);
+    }
+
+    /**
+     * Handles the DELETE request to remove a game by ID.
+     *
+     * @param Request $request The incoming HTTP request.
+     * @param Response $response The HTTP response to return.
+     * @param array $uri_args The URI arguments (should include 'game_id').
+     * @return Response The JSON response indicating the result of the deletion.
+     */
+    public function handleDeleteGame(Request $request, Response $response): Response
+    {
+        //? Validate HTTP Method
+        $this->validateHTTPMethod($request, ["DELETE"]);
+
+        //? Step 1 - Retrieve and validate game ID and encase it
+        $body = $request->getParsedBody();
+        if (is_array($body) && isset($body[0]) && is_array($body[0])) {
+            $body = $body[0];
+        }
+
+        $game_id  = $body["game_id"] ?? null;
+
+        //? Step 2 - Retrieve Game Service class and call deleteGame
+        $result = $this->games_service->deleteGame($game_id);
+
+        //? Step 3 - Make valid http error response
+        if (!$result->isSuccess()) {
+
+            $message = $result->getMessage();
+            $code = str_contains(strtolower($message), 'Not Found') ? 404 : 400;
+
+            return $this->renderJson($response, [
+                "status" => [
+                    "Type" => "error",
+                    "Code" => $code,
+                    "Content-Type" => "application/json",
+                    "Message" => $message,
+                    "Errors" => $result->getErrors(),
+                ]
+            ], $code);
+        }
+
+        //? Step 4 - Return response
+        return $this->renderJson($response, [
+            "status" => [
+                "Type" => "successful",
+                "Code" => 200,
+                "Content-Type" => "application/json",
+                "Message" => $result->getMessage(),
+            ],
+            "data" => $result->getData()
+        ], 200);
     }
 
     /**
@@ -94,6 +240,10 @@ class GamesController extends BaseController
      */
     public function handleGetGameByID(Request $request, Response $response, array $uri_args): Response
     {
+
+        //? Validate HTTP Method Sent
+        $this->validateHTTPMethod($request);
+
         //? Step 1 - Retrieve the game ID from the request.
         $game_id = $uri_args["game_id"];
 
@@ -106,7 +256,7 @@ class GamesController extends BaseController
         //? Step 3 - Retrieve the game details.
         $game_info = $this->games_model->getGamesById($game_id);
 
-        // Validate Game
+        //? Validate Game
         $this->validateGame($game_info, $request);
 
         //? Step 4 - Handle Errors
@@ -115,7 +265,18 @@ class GamesController extends BaseController
         }
 
         //? Step 5 - Return the JSON response.
-        return $this->renderJson($response, $game_info);
+        return $this->renderJson(
+            $response,
+            [
+                "status" => array(
+                    "Type" => "successful",
+                    "Code" => 200,
+                    "Content-Type" => "application/json",
+                    "Message" => "Game details fetched successfully",
+                ),
+                "game" => $game_info
+            ]
+        );
     }
 
     /**
@@ -130,6 +291,9 @@ class GamesController extends BaseController
      */
     public function handleGetGameStats(Request $request, Response $response, array $uri_args): Response
     {
+        //? Validate HTTP Method Sent
+        $this->validateHTTPMethod($request);
+
         //? Step 1 - Retrieve the game ID from the request.
         $game_id = $uri_args["game_id"];
 
@@ -143,24 +307,8 @@ class GamesController extends BaseController
         $filters = $request->getQueryParams();
         $this->validateFilters($filters, $request);
 
-        // Check if page parameter is a number
-        if (isset($filters['page']) && !is_numeric($filters['page'])) {
-            //! provided page invalid
-            throw new HttpInvalidInputException($request, "The 'page' parameter must be a valid number.");
-        }
-
-        // Check if page_size parameter is a number
-        if (isset($filters['page_size']) && !is_numeric($filters['page_size'])) {
-            //! provided page size invalid
-            throw new HttpInvalidInputException($request, "The 'page_size' parameter must be a valid number.");
-        }
-
-        if (isset($filters["page"]) && isset($filters["page_size"])) {
-            $this->games_model->setPaginationOptions(
-                $filters["page"],
-                $filters["page_size"]
-            );
-        }
+        //* Validate Pagination
+        $this->validatePagination($request);
 
         //? Step 4 - Retrieve stats from the model.
         $stats = $this->games_model->getStatsByGameId($game_id, $filters);
@@ -172,7 +320,18 @@ class GamesController extends BaseController
         }
 
         //? Step 6 - Return the JSON response.
-        return $this->renderJson($response, $stats);
+        return $this->renderJson(
+            $response,
+            [
+                "status" => array(
+                    "Type" => "successful",
+                    "Code" => 200,
+                    "Content-Type" => "application/json",
+                    "Message" => "Game stats fetched successfully",
+                ),
+                "games" => $stats
+            ]
+        );
     }
 
     /**
@@ -313,5 +472,60 @@ class GamesController extends BaseController
         if (isset($filters['sog']) && (!is_numeric($filters['sog']) || $filters['sog'] < 0)) {
             throw new HttpInvalidInputException($request, "Invalid SOG value. Expected a non-negative integer.");
         }
+    }
+
+    /**
+     * Validates the provided pagination details.
+     *
+     * @param Request $request The request object for error handling.
+     *
+     * @throws HttpInvalidInputException If the pagination is not valid.
+     */
+    private function validatePagination(Request $request)
+    {
+        $filters = $request->getQueryParams();
+
+        // Check if page or page_size is present in URI
+        if (isset($filters['page']) || isset($filters['page_size'])) {
+            if (!isset($filters['page'])) {
+                //! page must be present in the URI
+                throw new HttpInvalidInputException($request, "The 'page' parameter must be present in the URI.");
+            }
+            if (!isset($filters['page_size'])) {
+                //! page_size must be present in the URI
+                throw new HttpInvalidInputException($request, "The 'page_size' parameter must be present in the URI.");
+            }
+        }
+
+        // Check if page parameter is a number
+        if (isset($filters['page']) && !is_numeric($filters['page'])) {
+            //! provided page invalid
+            throw new HttpInvalidInputException($request, "The 'page' parameter must be a valid number.");
+        }
+
+        // Check if page_size parameter is a number
+        if (isset($filters['page_size']) && !is_numeric($filters['page_size'])) {
+            //! provided page size invalid
+            throw new HttpInvalidInputException($request, "The 'page_size' parameter must be a valid number.");
+        }
+
+        // Check if page parameter is greater than zero
+        if (isset($filters['page']) && $filters['page'] < 1) {
+            //! provided page must be greater than zero
+            throw new HttpInvalidInputException($request, "The 'page' parameter must be greater than zero.");
+        }
+
+        // Check if page_size parameter is greater than zero
+        if (isset($filters['page_size']) && $filters['page_size'] < 1) {
+            //! provided page_size number must be greater than zero
+            throw new HttpInvalidInputException($request, "The 'page_size' parameter must be greater than zero or must be present in the URI.");
+        }
+
+        // Check if page and page_size parameters are present inside URI
+        if (isset($filters['page']) && isset($filters['page_size'])) {
+            $this->games_model->setPaginationOptions($filters['page'], $filters['page_size']);
+        }
+
+        // Check if page or page_size is bigger than current amount in database
     }
 }

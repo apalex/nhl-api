@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Core\PDOService;
+use PDO;
 
 /**
  * Class TeamsModel
@@ -70,7 +71,7 @@ class TeamsModel extends BaseModel
 
         //* Order By
         if (isset($filters['order_by'])) {
-            switch(strtolower($filters['order_by'])) {
+            switch (strtolower($filters['order_by'])) {
                 case 'asc':
                     break;
                 case 'desc':
@@ -144,13 +145,182 @@ class TeamsModel extends BaseModel
 
         //* Response Model
         $team = $this->getTeamByID($team_id);
-        $game = $this->paginate($sql, $filters_values);
+        $games = $this->paginate($sql, $filters_values);
         $result = [
             "team" => $team,
-            "meta" => $game["meta"],
-            "goals" => $game["data"]
+            "meta" => $games["meta"],
+            "goals" => $games["data"]
         ];
 
         return $result;
+    }
+
+    /**
+     * Insert a list of teams inside the database.
+     *
+     * @param array $teams New team(s) to be inserted.
+     *
+     * @return mixed Int containing last inserted id.
+     */
+    function insertTeams(array $teams): mixed
+    {
+
+        $last_inserted_id = $this->insert("teams", $teams);
+
+        return $last_inserted_id;
+    }
+
+    /**
+     * Checks if a given team ID is already in use.
+     *
+     * @param int $team_id The ID of the team to check.
+     *
+     * @return bool Returns true if the team ID is already in use, else false.
+     */
+    public function checkTeamIDInUse(int $team_id)
+    {
+        //* SQL Query
+        $sql = "SELECT COUNT(*) FROM teams WHERE team_id = :team_id";
+
+        //* If COUNT > 0, then team_id is already in use
+        return $this->fetchSingle($sql, ['team_id' => $team_id])["COUNT(*)"] > 0;
+    }
+
+    /**
+     * Checks if a given coach ID exists in the database.
+     *
+     * @param int $coach_id The ID of the coach to check.
+     *
+     * @return array Returns the coach record if found, else empty array.
+     */
+    public function checkCoachIDExists(int $coach_id)
+    {
+
+        //* SQL Query
+        $sql = "SELECT * FROM coaches WHERE coach_id = :coach_id";
+
+        //* Store in a var if fetchSingle did not find anything, then can return an empty array
+        $result = $this->fetchSingle($sql, ['coach_id' => $coach_id]);
+
+        return $result !== false ? $result : [];
+    }
+
+    /**
+     * Checks if a given coach ID is already assigned to a team.
+     *
+     * @param int $coach_id The ID of the coach to check.
+     *
+     * @return bool Returns true if the coach ID is already in use, else false.
+     */
+    public function checkCoachIDInUse(int $coach_id)
+    {
+
+        //* SQL Query
+        $sql = "SELECT COUNT(*) FROM teams WHERE coach_id = :coach_id";
+
+        //* If COUNT > 0, then coach_id is already in use
+        return $this->fetchSingle($sql, ['coach_id' => $coach_id])["COUNT(*)"] > 0;
+    }
+
+    /**
+     * Checks if a given arena ID exists in the database.
+     *
+     * @param int $arena_id The ID of the arena to check.
+     *
+     * @return array Returns the arena record if found, else an empty array.
+     */
+    public function checkArenaIDExists(int $arena_id)
+    {
+
+        //* SQL Query
+        $sql = "SELECT * FROM arenas WHERE arena_id = :arena_id";
+
+        //* Store in a var if fetchSingle did not find anything, then can return an empty array
+        $result = $this->fetchSingle($sql, ['arena_id' => $arena_id]);
+
+        return $result !== false ? $result : [];
+    }
+
+    /**
+     * Checks if a given arena ID is already assigned to a team.
+     *
+     * @param int $arena_id The ID of the arena to check.
+     *
+     * @return bool Returns true if the arena ID is already in use, else false.
+     */
+    public function checkArenaIDInUse(int $arena_id)
+    {
+
+        //* SQL Query
+        $sql = "SELECT COUNT(*) FROM teams WHERE arena_id = :arena_id";
+
+        //* If COUNT > 0, then arena_id is already in use
+        return $this->fetchSingle($sql, ['arena_id' => $arena_id])["COUNT(*)"] > 0;
+    }
+
+    /**
+     * Updates a team by its ID.
+     *
+     * @param string $team_id The ID of the team to update.
+     *
+     * @return void
+     */
+    public function updateTeams(array $teams, int $team_id): void
+    {
+        //* Delete Team_ID from teams array to allow update
+        unset($teams["team_id"]);
+
+        $this->update("teams", $teams, ["team_id" => $team_id]);
+    }
+
+    /**
+     * Checks if a given coach ID is already assigned to a different team.
+     *
+     * @param int $coach_id The ID of the coach to check.
+     * @param int $team_id  The ID of the team being updated.
+     *
+     * @return bool Returns true if the coach ID is already in use in another team, else false.
+     */
+    public function checkCoachIDInUseUpdate(int $coach_id, int $team_id)
+    {
+
+        //* SQL Query
+        $sql = "SELECT COUNT(*) FROM teams WHERE coach_id = :coach_id AND team_id != :team_id";
+
+        //* If COUNT > 0, then coach_id is already in use
+        return $this->fetchSingle($sql, ['coach_id' => $coach_id, 'team_id' => $team_id])["COUNT(*)"] > 0;
+    }
+
+   /**
+     * Checks if a given arena ID is already assigned to a different team.
+     *
+     * @param int $arena_id The ID of the arena to check.
+     * @param int $team_id  The ID of the team being updated.
+     *
+     * @return bool Returns true if the arena ID is already in use in another team, else false.
+     */
+    public function checkArenaIDInUseUpdate(int $arena_id, int $team_id)
+    {
+
+        //* SQL Query
+        $sql = "SELECT COUNT(*) FROM teams WHERE arena_id = :arena_id AND team_id != :team_id";
+
+        //* If COUNT > 0, then arena_id is already in use
+        return $this->fetchSingle($sql, ['arena_id' => $arena_id, 'team_id' => $team_id])["COUNT(*)"] > 0;
+    }
+
+    /**
+     * Deletes a team by its ID.
+     *
+     * @param string $team_id The ID of the team to delete.
+     *
+     * @return void
+     */
+    public function deleteTeamById(int $team_id): bool
+    {
+        //* DELETE
+        $result = $this->delete("teams", ["team_id" => $team_id]);
+
+        return $result > 0;
     }
 }

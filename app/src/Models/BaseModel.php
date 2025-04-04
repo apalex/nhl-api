@@ -277,8 +277,8 @@ abstract class BaseModel
         $data = $this->fetchAll($sql, $args);
 
         $result = [
-            "meta" => $ph->getPaginationMetadata(),
-            "data" => $data
+            "data" => $data,
+            "meta" => $ph->getPaginationMetadata()
         ];
 
         return $result;
