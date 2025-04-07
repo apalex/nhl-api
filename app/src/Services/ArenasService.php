@@ -47,6 +47,8 @@ class ArenasService
                 "city"       => ['required', ['regex', '/^[A-Za-z\s]+$/']],
                 "province"      => ['required', ['lengthBetween', 2, 50]],
                 "capacity"   => ['required', 'integer', ['min', 1000]],
+                "arena_id" => ['required', 'integer', ['min', '1']],
+                "team_id" => ['required', 'integer', ['min', '1']],
                 "year_built" => ['required', 'integer', ['min', 1800], ['max', date("Y")]]
             ];
 
