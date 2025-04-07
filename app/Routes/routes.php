@@ -68,22 +68,24 @@ return static function (Slim\App $app): void {
 
     $app->post('/games', [GamesController::class, 'handleCreateGame']);
 
+    $app->post('/arenas', [GamesController::class, 'handleCreateArena']);
+
     //* ROUTE: PUT
     $app->put('/teams', [TeamsController::class, 'handlePutTeams']);
 
     $app->put('/games', [GamesController::class, 'handleUpdateGame']);
+
+    $app->put('/arenas', [ArenasController::class, 'handleUpdateArena']);
 
     //* ROUTE: DELETE
     $app->delete('/teams', [TeamsController::class, 'handleDeleteTeams']);
 
     $app->delete('/games', [GamesController::class, 'handleDeleteGame']);
 
+    $app->delete('/arenas', [GamesController::class, 'handleDeleteArena']);
 
-    $app->group('/arenas', function () use ($app) {
-        $app->post('', '\\App\\Controllers\\ArenasController:create');
-        $app->put('/{id}', '\\App\\Controllers\\ArenasController:update');
-        $app->delete('/{id}', '\\App\\Controllers\\ArenasController:delete');
-    });
+
+
 };
 
 

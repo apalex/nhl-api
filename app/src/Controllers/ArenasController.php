@@ -8,6 +8,7 @@ use App\Models\ArenasModel;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Exception\HttpNotFoundException;
+use App\Services\ArenasService;
 
 /**
  * Controller for handling arena-related requests.
@@ -17,7 +18,7 @@ class ArenasController extends BaseController
     /**
      * @var ArenasModel $arenas_model The model handling arena data.
      */
-    public function __construct(private ArenasModel $arenas_model) {}
+    public function __construct(private ArenasModel $arenas_model, private ArenasService $arenasService) {}
 
     /**
      * Handles requests to retrieve multiple arenas with optional filters.
@@ -184,7 +185,7 @@ class ArenasController extends BaseController
         }
     }
 
-     /**
+    /**
      * Validates the order parameter.
      *
      * @param string $orderBy The sorting order to validate.
@@ -201,23 +202,23 @@ class ArenasController extends BaseController
     }
 
     /**
-    * Validates the game type format.
-    *
-    * @param string $game_type The game type to validate.
-    * @param Request $request The HTTP request.
-    *
-    * @throws HttpInvalidInputException If the game type is not valid.
-    */
-     private function validateGameType(mixed $game_type, Request $request)
-     {
+     * Validates the game type format.
+     *
+     * @param string $game_type The game type to validate.
+     * @param Request $request The HTTP request.
+     *
+     * @throws HttpInvalidInputException If the game type is not valid.
+     */
+    private function validateGameType(mixed $game_type, Request $request)
+    {
 
-         $allowed = ['regular', 'playoffs', 'preseason'];
+        $allowed = ['regular', 'playoffs', 'preseason'];
 
-         if (!in_array($game_type, $allowed)) {
-             //! provided sort filter invalid
-             throw new HttpInvalidInputException($request, "The provided game type is invalid. Expected input: ['regular', 'playoffs', 'preseason']");
-         }
-     }
+        if (!in_array($game_type, $allowed)) {
+            //! provided sort filter invalid
+            throw new HttpInvalidInputException($request, "The provided game type is invalid. Expected input: ['regular', 'playoffs', 'preseason']");
+        }
+    }
 
     /**
      * Validates the arena name format.
@@ -320,43 +321,161 @@ class ArenasController extends BaseController
             throw new HttpInvalidInputException($request, "No matching record for arena games found.");
         }
     }
-    public function create(Request $request, Response $response, $args): Response
-{
-    $data = $request->getParsedBody();
-    $service = new ArenasService($this->db);
-    $result = $service->create($data);
 
-    if (!$result->isSuccess()) {
-        throw new HttpInvalidInputException(json_encode($result->getData()));
+
+    //* ROUTE: POST /arena
+
+    /**
+     * Handles inserting arena(s) into database.
+     *
+     * @param Request $request The incoming HTTP request.
+     * @param Response $response The outgoing HTTP response.
+     *
+     * @return Response JSON response containing HTTP response to the request.
+     */
+    public function handlePostArenas(Request $request, Response $response): Response
+    {
+        //* Validate HTTP Method Sent
+        $this->validateHTTPMethod($request, ['POST']);
+
+        //* Fetch Body
+        $team_info = $request->getParsedBody();
+
+        //* Send Body to Service
+        $result = $this->arenasService->createArenas($team_info);
+
+        //* Valid HTTP Response Message Structure
+        if ($result->isSuccess()) {
+            $status = [
+                "Type" => "successful",
+                'Code' => 201,
+                "Content-Type" => "application/json",
+                'Message' => $result->getMessage()
+            ];
+            $payload = [
+                "status" => $status,
+                "team(s)" => $result->getData()
+            ];
+            return $this->renderJson($response, $payload, 201);
+        }
+        //* Invalid HTTP Response Message Structure
+        else {
+            $status = [
+                "Type" => "error",
+                'Code' => 422,
+                'Content-Type' => 'application/json',
+                'Message' => $result->getMessage()
+            ];
+            $payload = [
+                "status" => $status,
+                "details" => $result->getErrors()
+            ];
+            return $this->renderJson($response, $payload, 422);
+        }
+        
     }
 
-    return $this->respondWithData($response, $result->getData(), 201);
-}
 
-public function update(Request $request, Response $response, $args): Response
-{
-    $id = (int)$args['id'];
-    $data = $request->getParsedBody();
-    $service = new ArenasService($this->db);
-    $result = $service->update($id, $data);
 
-    if (!$result->isSuccess()) {
-        throw new HttpInvalidInputException(json_encode($result->getData()));
+
+    //* ROUTE: DELETE /arena
+
+    /**
+     * Handles deleting arena(s) fromdatabase.
+     *
+     * @param Request $request The incoming HTTP request.
+     * @param Response $response The outgoing HTTP response.
+     *
+     * @return Response JSON response containing HTTP response to the request.
+     */
+    public function handleDeleteArenas(Request $request, Response $response): Response
+    {
+        //* Validate HTTP Method Sent
+        $this->validateHTTPMethod($request, ['DELETE']);
+
+        //* Fetch Body
+        $team_info = $request->getParsedBody();
+
+        //* Send Body to Service
+        $result = $this->arenasService->deleteArenas($team_info);
+
+        //* Valid HTTP Response Message Structure
+        if ($result->isSuccess()) {
+            $status = [
+                "Type" => "successful",
+                'Code' => 200,
+                "Content-Type" => "application/json",
+                'Message' => $result->getMessage()
+            ];
+            $payload = [
+                "status" => $status,
+                "team(s)" => $result->getData()
+            ];
+            return $this->renderJson($response, $payload, 200);
+        }
+        //* Invalid HTTP Response Message Structure
+        else {
+            $status = [
+                "Type" => "error",
+                'Code' => 422,
+                'Content-Type' => 'application/json',
+                'Message' => $result->getMessage()
+            ];
+            $payload = [
+                "status" => $status,
+                "details" => $result->getErrors()
+            ];
+            return $this->renderJson($response, $payload, 422);
+        }
     }
+    //* ROUTE: PUT /teams
 
-    return $this->respondWithData($response, $result->getData());
-}
+    /**
+     * Handles updating arena(s) into database.
+     *
+     * @param Request $request The incoming HTTP request.
+     * @param Response $response The outgoing HTTP response.
+     *
+     * @return Response JSON response containing HTTP response to the request.
+     */
+    public function handlePutArenas(Request $request, Response $response): Response
+    {
+        //* Validate HTTP Method Sent
+        $this->validateHTTPMethod($request, ['PUT']);
 
-public function delete(Request $request, Response $response, $args): Response
-{
-    $id = (int)$args['id'];
-    $service = new ArenasService($this->db);
-    $result = $service->delete($id);
+        //* Fetch Body
+        $team_info = $request->getParsedBody();
 
-    if ($result->getData()['deleted'] === 0) {
-        return $this->respondWithError($response, "Arena not found", 404);
+        //* Send Body to Service
+        $result = $this->arenasService->updateArenas($team_info);
+
+        //* Valid HTTP Response Message Structure
+        if ($result->isSuccess()) {
+            $status = [
+                "Type" => "successful",
+                'Code' => 200,
+                "Content-Type" => "application/json",
+                'Message' => $result->getMessage()
+            ];
+            $payload = [
+                "status" => $status,
+                "team(s)" => $result->getData()
+            ];
+            return $this->renderJson($response, $payload, 200);
+        }
+        //* Invalid HTTP Response Message Structure
+        else {
+            $status = [
+                "Type" => "error",
+                'Code' => 422,
+                'Content-Type' => 'application/json',
+                'Message' => $result->getMessage()
+            ];
+            $payload = [
+                "status" => $status,
+                "details" => $result->getErrors()
+            ];
+            return $this->renderJson($response, $payload, 422);
+        }
     }
-
-    return $this->respondWithData($response, $result->getData());
-}
 }
