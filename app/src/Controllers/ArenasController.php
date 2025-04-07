@@ -88,7 +88,7 @@ class ArenasController extends BaseController
      * @param array $uri_args The URI arguments (e.g., arena_id).
      * @return Response The JSON response containing the arena details.
      */
-    public function  handleGetArenaByID(Request $request, Response $response, array $uri_args): Response
+    public function  handleGetArenasByID(Request $request, Response $response, array $uri_args): Response
     {
         // Validate HTTP Method Sent
         $this->validateHTTPMethod($request);
@@ -131,7 +131,7 @@ class ArenasController extends BaseController
      * @param array $uri_args Route arguments containing team ID.
      * @return Response The JSON response containing related arenas.
      */
-    public function handleGetArenaGames(Request $request, Response $response, array $uri_args): Response
+    public function handleGetArenasGames(Request $request, Response $response, array $uri_args): Response
     {
 
         // Validate HTTP Method Sent
@@ -158,7 +158,7 @@ class ArenasController extends BaseController
         $arena_info = $this->arenas_model->getGamesByArenaId($arena_id, $filters);
 
         //* Call Validate Player Info
-        $this->validateArenaGame($arena_info, $request);
+        $this->validateArenasGame($arena_info, $request);
 
         return $this->renderJson($response, [
             "status" => array(
@@ -314,7 +314,7 @@ class ArenasController extends BaseController
      *
      * @throws HttpInvalidInputException If no arena game record is found.
      */
-    private function validateArenaGame($arena_info, Request $request)
+    private function validateArenasGame($arena_info, Request $request)
     {
         if (count($arena_info['games']) <= 0) {
             //! no matching record in the db
@@ -428,7 +428,7 @@ class ArenasController extends BaseController
             return $this->renderJson($response, $payload, 422);
         }
     }
-    //* ROUTE: PUT /teams
+    //* ROUTE: PUT /arenas
 
     /**
      * Handles updating arena(s) into database.
