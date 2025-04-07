@@ -64,9 +64,10 @@ class ArenasService
             return Result::failure("Validation failed for some arenas.", $errors);
         }
 
-        foreach ($arenas as $arena) {
+        foreach ($arenas as $index => $arena) {
+            $insertedArenas[$index] = $arena;
             $this->arenasModel->createArena($arena);
-            $inserted[] = $arena;
+            
         }
 
         return Result::success("Arenas successfully inserted.", $inserted);
