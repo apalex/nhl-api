@@ -339,10 +339,10 @@ class ArenasController extends BaseController
         $this->validateHTTPMethod($request, ['POST']);
 
         //* Fetch Body
-        $team_info = $request->getParsedBody();
+        $arena_info = $request->getParsedBody();
 
         //* Send Body to Service
-        $result = $this->arenasService->createArenas($team_info);
+        $result = $this->arenasService->createArenas($arena_info);
 
         //* Valid HTTP Response Message Structure
         if ($result->isSuccess()) {
@@ -354,7 +354,7 @@ class ArenasController extends BaseController
             ];
             $payload = [
                 "status" => $status,
-                "team(s)" => $result->getData()
+                "arena(s)" => $result->getData()
             ];
             return $this->renderJson($response, $payload, 201);
         }
@@ -372,7 +372,7 @@ class ArenasController extends BaseController
             ];
             return $this->renderJson($response, $payload, 422);
         }
-        
+
     }
 
 
@@ -381,7 +381,7 @@ class ArenasController extends BaseController
     //* ROUTE: DELETE /arena
 
     /**
-     * Handles deleting arena(s) fromdatabase.
+     * Handles deleting arena(s) from database.
      *
      * @param Request $request The incoming HTTP request.
      * @param Response $response The outgoing HTTP response.
@@ -394,10 +394,10 @@ class ArenasController extends BaseController
         $this->validateHTTPMethod($request, ['DELETE']);
 
         //* Fetch Body
-        $team_info = $request->getParsedBody();
+        $arena_info = $request->getParsedBody();
 
         //* Send Body to Service
-        $result = $this->arenasService->deleteArenas($team_info);
+        $result = $this->arenasService->deleteArenas($arena_info);
 
         //* Valid HTTP Response Message Structure
         if ($result->isSuccess()) {
@@ -409,7 +409,7 @@ class ArenasController extends BaseController
             ];
             $payload = [
                 "status" => $status,
-                "team(s)" => $result->getData()
+                "arena(s)" => $result->getData()
             ];
             return $this->renderJson($response, $payload, 200);
         }
@@ -444,10 +444,10 @@ class ArenasController extends BaseController
         $this->validateHTTPMethod($request, ['PUT']);
 
         //* Fetch Body
-        $team_info = $request->getParsedBody();
+        $arena_info = $request->getParsedBody();
 
         //* Send Body to Service
-        $result = $this->arenasService->updateArenas($team_info);
+        $result = $this->arenasService->updateArenas($arena_info);
 
         //* Valid HTTP Response Message Structure
         if ($result->isSuccess()) {
@@ -459,7 +459,7 @@ class ArenasController extends BaseController
             ];
             $payload = [
                 "status" => $status,
-                "team(s)" => $result->getData()
+                "arena(s)" => $result->getData()
             ];
             return $this->renderJson($response, $payload, 200);
         }

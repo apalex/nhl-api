@@ -36,7 +36,7 @@ class ArenasService
 
         foreach ($arenas as $index => $arena) {
             // Type casting to string for safety
-            foreach (["arena_id", "capacity", "construction_year"] as $field) {
+            foreach (["arena_id", "capacity", "year_built" , "team_id"] as $field) {
                 if (isset($arena[$field])) {
                     $arena[$field] = (string)$arena[$field];
                 }
@@ -44,11 +44,10 @@ class ArenasService
 
             $rules = [
                 "arena_name" => ['required', ['regex', '/^[\w\s\'\-]{2,50}$/']],
-                "location"   => ['required', ['regex', '/^[\w\s\'\-]{2,50}$/']],
                 "city"       => ['required', ['regex', '/^[A-Za-z\s]+$/']],
-                "state"      => ['required', ['lengthBetween', 2, 50]],
+                "province"      => ['required', ['lengthBetween', 2, 50]],
                 "capacity"   => ['required', 'integer', ['min', 1000]],
-                "construction_year" => ['required', 'integer', ['min', 1800], ['max', date("Y")]]
+                "year_built" => ['required', 'integer', ['min', 1800], ['max', date("Y")]]
             ];
 
             $validator = new Validator($arena, [], 'en');

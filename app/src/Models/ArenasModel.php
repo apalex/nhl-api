@@ -135,7 +135,7 @@ class ArenasModel extends BaseModel
 
         return $result;
     }
-     /**
+    /**
      * Inserts a new arena into the database.
      *
      * Uses the base model's insert method to add the arena and returns the inserted ID.
@@ -192,7 +192,4 @@ class ArenasModel extends BaseModel
 
         $this->update("teams", $arenas, ["arena_id" => $arena_id]);
     }
-
 }
-
-
