@@ -19,7 +19,6 @@ class ArenasModel extends BaseModel
     {
         parent::__construct($pdo);
     }
-
     /**
      * Retrieves a list of arenas based on provided filters.
      *
@@ -182,8 +181,13 @@ class ArenasModel extends BaseModel
      */
     public function checkArenaIdExists(int $arena_id): bool
     {
-        $sql = "SELECT COUNT(*) FROM arenas WHERE arena_id = :arena_id";
-        return $this->fetchSingle($sql, ['arena_id' => $arena_id])["COUNT(*)"] > 0;
+       //* SQL Query
+       $sql = "SELECT * FROM arenas WHERE arena_id = :arena_id";
+
+       //* Store in a var if fetchSingle did not find anything, then can return an empty array
+       $result = $this->fetchSingle($sql, ['arena_id' => $arena_id]);
+
+       return $result !== false ? $result : [];
     }
     public function updateArenas(array $arenas, int $arena_id): void
     {
@@ -191,5 +195,13 @@ class ArenasModel extends BaseModel
         unset($arenas["arena_id"]);
 
         $this->update("teams", $arenas, ["arena_id" => $arena_id]);
+    }
+    public function checkTeamIDInUse(int $team_id)
+    {
+        //* SQL Query
+        $sql = "SELECT COUNT(*) FROM arenas WHERE team_id = :team_id";
+
+        //* If COUNT > 0, then team_id is already in use
+        return $this->fetchSingle($sql, ['team_id' => $team_id])["COUNT(*)"] > 0;
     }
 }
