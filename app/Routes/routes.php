@@ -75,17 +75,12 @@ return static function (Slim\App $app): void {
 
     $app->put('/games', [GamesController::class, 'handleUpdateGame']);
 
-    $app->put('/arenas', [ArenasController::class, 'handleUpdateArena']);
+    $app->put('/arenas', [ArenasController::class, 'handlePutArenas']);
 
     //* ROUTE: DELETE
     $app->delete('/teams', [TeamsController::class, 'handleDeleteTeams']);
 
     $app->delete('/games', [GamesController::class, 'handleDeleteGame']);
 
-    $app->delete('/arenas', [ArenasController::class, 'handleDeleteArena']);
-
-
-
+    $app->delete('/arenas', [ArenasController::class, 'handleDeleteArenas']);
 };
-
-

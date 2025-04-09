@@ -84,17 +84,21 @@ class ArenasModel extends BaseModel
     /**
      * Retrieves arena details by arena ID.
      *
-     * @param string $arena_id The ID of the arena.
+     * @param int $arena_id The ID of the arena.
+     *
      * @return mixed The arena details or null if not found.
      */
-    public function getArenaById(string $arena_id): mixed
+    public function getArenaById(int $arena_id): mixed
     {
+        //* Default SQL Query
         $sql = "SELECT * FROM arenas WHERE arena_id = :arena_id";
 
+        //* Store in a var if fetchSingle did not find anything, then can return an empty array
         $result = $this->fetchSingle($sql, ['arena_id' => $arena_id]);
 
         return $result !== false ? $result : [];
     }
+
     public function getGamesByArenaId(string $arena_id, array $filters): mixed
     {
         $filters_values = ['arena_id' => $arena_id];
@@ -134,74 +138,139 @@ class ArenasModel extends BaseModel
 
         return $result;
     }
-    /**
-     * Inserts a new arena into the database.
-     *
-     * Uses the base model's insert method to add the arena and returns the inserted ID.
-     *
-     * @param array $data An associative array of column => value pairs for the new arena.
-     * @return string The ID of the newly inserted arena.
-     */
-    public function createArena(array $data): string
-    {
-        return $this->insert("arena", $data);
-    }
 
     /**
-     * Updates a game by ID with provided fields.
+     * Insert a list of arenas inside the database.
      *
-     * @param string $game_id The ID of the game to update.
-     * @param array $data Associative array of fields to update.
-     * @return void
+     * @param array $arenas New arena(s) to be inserted.
+     *
+     * @return mixed Int containing last inserted id.
      */
-    public function updateArenaById(string $arena_id, array $data): void
+    function insertArenas(array $arenas): mixed
     {
-        $this->update("arena", $data, ["arena_id" => $arena_id]);
+
+        $last_inserted_id = $this->insert("arenas", $arenas);
+
+        return $last_inserted_id;
     }
 
     /**
      * Deletes a arena by its ID.
      *
-     * @param string $game_id The ID of the arena to delete.
+     * @param string $arena_id The ID of the arena to delete.
      *
      * @return void
      */
-    public function deleteArenaById(string $arena_id): void
+    public function deleteArenaById(int $arena_id): bool
     {
-        $this->delete("arena", ["arena_id" => $arena_id]);
+        //* DELETE
+        $result = $this->delete("arenas", ["arena_id" => $arena_id]);
+
+        return $result > 0;
     }
 
+    /**
+     * Checks if a given arena ID is already in use.
+     *
+     * @param int $arena_id The arena ID to check.
+     *
+     * @return bool Returns true if the arena ID is already in use, else false.
+     */
+    public function checkArenaIDInUse(int $arena_id)
+    {
+       //* SQL Query
+       $sql = "SELECT COUNT(*) FROM arenas WHERE arena_id = :arena_id";
 
+        //* If COUNT > 0, then arena_id is already in use
+        return $this->fetchSingle($sql, ['arena_id' => $arena_id])["COUNT(*)"] > 0;
+    }
 
     /**
      * Checks if a given arena ID exists in the database.
      *
-     * @param int $arena_id The arena ID to check.
-     * @return bool True if exists, false otherwise.
+     * @param int $arena_id The ID of the arena to check.
+     *
+     * @return array Returns the arena record if found, else empty array.
      */
-    public function checkArenaIdExists(int $arena_id): bool
+    public function checkArenaIDExists(int $arena_id)
     {
-       //* SQL Query
-       $sql = "SELECT * FROM arenas WHERE arena_id = :arena_id";
 
-       //* Store in a var if fetchSingle did not find anything, then can return an empty array
-       $result = $this->fetchSingle($sql, ['arena_id' => $arena_id]);
+        //* SQL Query
+        $sql = "SELECT * FROM arenas WHERE arena_id = :arena_id";
 
-       return $result !== false ? $result : [];
+        //* Store in a var if fetchSingle did not find anything, then can return an empty array
+        $result = $this->fetchSingle($sql, ['arena_id' => $arena_id]);
+
+        return $result !== false ? $result : [];
     }
+
+    /**
+     * Updates a arena by its ID.
+     *
+     * @param array $arenas The array of arenas to update.
+     * @param string $arena_id The ID of the team to update.
+     *
+     * @return void
+     */
     public function updateArenas(array $arenas, int $arena_id): void
     {
-        //* Delete Arena_ID from teams array to allow update
+        //* Delete Arena_ID from arenas array to allow update
         unset($arenas["arena_id"]);
 
-        $this->update("teams", $arenas, ["arena_id" => $arena_id]);
+        $this->update("arenas", $arenas, ["arena_id" => $arena_id]);
     }
+
+    /**
+     * Checks if a given team ID exists in the database.
+     *
+     * @param int $team_id The ID of the coach to check.
+     *
+     * @return array Returns the team record if found, else empty array.
+     */
+    public function checkTeamIDExists(int $team_id)
+    {
+
+        //* SQL Query
+        $sql = "SELECT * FROM teams WHERE team_id = :team_id";
+
+        //* Store in a var if fetchSingle did not find anything, then can return an empty array
+        $result = $this->fetchSingle($sql, ['team_id' => $team_id]);
+
+        return $result !== false ? $result : [];
+    }
+
+    /**
+     * Checks if a given team ID is already assigned to an arena.
+     *
+     * @param int $team_id The ID of the team to check.
+     *
+     * @return bool Returns true if the team ID is already in use, else false.
+     */
     public function checkTeamIDInUse(int $team_id)
     {
+
         //* SQL Query
         $sql = "SELECT COUNT(*) FROM arenas WHERE team_id = :team_id";
 
         //* If COUNT > 0, then team_id is already in use
         return $this->fetchSingle($sql, ['team_id' => $team_id])["COUNT(*)"] > 0;
+    }
+
+   /**
+     * Checks if a given team ID is already assigned to a different arena.
+     *
+     * @param int $team_id The ID of the team to check.
+     * @param int $arena_id  The ID of the arena being updated.
+     *
+     * @return bool Returns true if the team ID is already in use in another arena, else false.
+     */
+    public function checkTeamIDInUseUpdate(int $team_id, int $arena_id)
+    {
+
+        //* SQL Query
+        $sql = "SELECT COUNT(*) FROM arenas WHERE team_id = :team_id AND arena_id != :arena_id";
+
+        //* If COUNT > 0, then team_id is already in use
+        return $this->fetchSingle($sql, ['team_id' => $team_id, 'arena_id' => $arena_id])["COUNT(*)"] > 0;
     }
 }

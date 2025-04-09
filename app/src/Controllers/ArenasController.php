@@ -323,7 +323,7 @@ class ArenasController extends BaseController
     }
 
 
-    //* ROUTE: POST /arena
+    //* ROUTE: POST /arenas
 
     /**
      * Handles inserting arena(s) into database.
@@ -372,32 +372,28 @@ class ArenasController extends BaseController
             ];
             return $this->renderJson($response, $payload, 422);
         }
-
     }
 
-
-
-
-    //* ROUTE: DELETE /arena
+    //* ROUTE: PUT /arenas
 
     /**
-     * Handles deleting arena(s) from database.
+     * Handles updating arena(s) into database.
      *
      * @param Request $request The incoming HTTP request.
      * @param Response $response The outgoing HTTP response.
      *
      * @return Response JSON response containing HTTP response to the request.
      */
-    public function handleDeleteArenas(Request $request, Response $response): Response
+    public function handlePutArenas(Request $request, Response $response): Response
     {
         //* Validate HTTP Method Sent
-        $this->validateHTTPMethod($request, ['DELETE']);
+        $this->validateHTTPMethod($request, ['PUT']);
 
         //* Fetch Body
         $arena_info = $request->getParsedBody();
 
         //* Send Body to Service
-        $result = $this->arenasService->deleteArenas($arena_info);
+        $result = $this->arenasService->updateArenas($arena_info);
 
         //* Valid HTTP Response Message Structure
         if ($result->isSuccess()) {
@@ -428,26 +424,27 @@ class ArenasController extends BaseController
             return $this->renderJson($response, $payload, 422);
         }
     }
-    //* ROUTE: PUT /arenas
+
+    //* ROUTE: DELETE /arenas
 
     /**
-     * Handles updating arena(s) into database.
+     * Handles deleting arena(s) from database.
      *
      * @param Request $request The incoming HTTP request.
      * @param Response $response The outgoing HTTP response.
      *
      * @return Response JSON response containing HTTP response to the request.
      */
-    public function handlePutArenas(Request $request, Response $response): Response
+    public function handleDeleteArenas(Request $request, Response $response): Response
     {
         //* Validate HTTP Method Sent
-        $this->validateHTTPMethod($request, ['PUT']);
+        $this->validateHTTPMethod($request, ['DELETE']);
 
         //* Fetch Body
         $arena_info = $request->getParsedBody();
 
         //* Send Body to Service
-        $result = $this->arenasService->updateArenas($arena_info);
+        $result = $this->arenasService->deleteArenas($arena_info);
 
         //* Valid HTTP Response Message Structure
         if ($result->isSuccess()) {

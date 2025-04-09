@@ -53,6 +53,7 @@ class TeamsService
             $rules = array(
                 "team_id" => [
                     'integer',
+                    ['min', '1'],
                     [function() use ($team) {
                         return !$this->teamsModel->checkTeamIDInUse((int)$team["team_id"]);
                     }, 'is already in use!']
@@ -66,10 +67,14 @@ class TeamsService
                     'integer',
                     ['min', '1'],
                     [function() use ($team) {
-                        return !count($this->teamsModel->checkCoachIDExists((int)$team["coach_id"])) == 0;
+                        if (isset($team['coach_id'])) {
+                            return !count($this->teamsModel->checkCoachIDExists((int)$team["coach_id"])) == 0;
+                        }
                     }, 'does not exist!'],
                     [function() use ($team) {
-                        return !$this->teamsModel->checkCoachIDInUse((int)$team["coach_id"]);
+                        if (isset($team['coach_id'])) {
+                            return !$this->teamsModel->checkCoachIDInUse((int)$team["coach_id"]);
+                        }
                     }, 'is already in use!']
                 ],
                 "arena_id" => [
@@ -77,10 +82,14 @@ class TeamsService
                     'integer',
                     ['min', '1'],
                     [function() use ($team) {
-                        return !count($this->teamsModel->checkArenaIDExists((int)$team["arena_id"])) == 0;
+                        if (isset($team['arena_id'])) {
+                            return !count($this->teamsModel->checkArenaIDExists((int)$team["arena_id"])) == 0;
+                        }
                     }, 'does not exist!'],
                     [function() use ($team) {
-                        return !$this->teamsModel->checkArenaIDInUse((int)$team["arena_id"]);
+                        if (isset($team['arena_id'])) {
+                            return !$this->teamsModel->checkArenaIDInUse((int)$team["arena_id"]);
+                        }
                     }, 'is already in use!']
                 ],
                 "founding_year" => [
@@ -162,7 +171,13 @@ class TeamsService
             //* Validator Rules
             $rules = array(
                 "team_id" => [
-                    'integer'
+                    'required',
+                    'integer',
+                    [function() use ($team) {
+                        if (isset($team['team_id'])) {
+                            return !count($this->teamsModel->checkTeamIDExists((int)$team["team_id"])) == 0;
+                        }
+                    }, 'does not exist!'],
                 ],
                 "team_name" => [
                     ['regex', '/^[A-Za-z]{2,30}(?: [A-Za-z]{2,30})*$/']
@@ -171,10 +186,14 @@ class TeamsService
                     'integer',
                     ['min', '1'],
                     [function() use ($team) {
-                        return !count($this->teamsModel->checkCoachIDExists((int)$team["coach_id"])) == 0;
+                        if (isset($team['coach_id'])) {
+                            return !count($this->teamsModel->checkCoachIDExists((int)$team["coach_id"])) == 0;
+                        }
                     }, 'does not exist!'],
                     [function() use ($team) {
-                        return !$this->teamsModel->checkCoachIDInUseUpdate((int)$team["coach_id"], (int)$team['team_id']);
+                        if (isset($team['coach_id']) && isset($team['team_id'])) {
+                            return !$this->teamsModel->checkCoachIDInUseUpdate((int)$team["coach_id"], (int)$team['team_id']);
+                        }
                     }, 'is already in use!']
                 ],
                 "arena_id" => [
@@ -184,7 +203,9 @@ class TeamsService
                         return !count($this->teamsModel->checkArenaIDExists((int)$team["arena_id"])) == 0;
                     }, 'does not exist!'],
                     [function() use ($team) {
-                        return !$this->teamsModel->checkArenaIDInUseUpdate((int)$team["arena_id"], (int)$team['team_id']);
+                        if (isset($team['coach_id']) && isset($team['team_id'])) {
+                            return !$this->teamsModel->checkArenaIDInUseUpdate((int)$team["arena_id"], (int)$team['team_id']);
+                        }
                     }, 'is already in use!']
                 ],
                 "founding_year" => [
