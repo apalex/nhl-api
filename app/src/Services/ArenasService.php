@@ -1,94 +1,267 @@
 <?php
-
 namespace App\Services;
 
-use App\Core\PDOService;
 use App\Core\Result;
+use App\Models\ArenasModel;
 use App\Validation\Validator;
-use App\Exceptions\HttpInvalidInputException;
-use PDO;
 
+/**
+ * Class ArenasService
+ *
+ * Handles business logic for arenas, including validation and DB interaction
+ */
 class ArenasService
 {
-    private $db;
+    /**
+     * Constructor for ArenasService
+     *
+     * @param ArenasModel $arenasModel
+     */
+    public function __construct(private ArenasModel $arenasModel) {}
 
-    public function __construct(PDO $db)
+      /**
+     * Handles inserting a list of arenas into database.
+     *
+     * @param array $arenas The incoming data to insert.
+     *
+     * @return Result JSON response to encapsulate and return the result of Create Operation.
+     *
+     */
+    public function createArenas(array $arenas): Result
     {
-        $this->db = $db;
-    }
-
-    public function create(array $data): Result
-    {
-        // Validation rules
-        $rules = [
-            'name'     => ['required'],
-            'city'     => ['required'],
-            'province' => ['required'],
-            'capacity' => ['required', 'integer'],
-            'team_id'  => ['required', 'integer'],
-        ];
-
-        $validator = new Validator($data, [], 'en');
-        $validator->mapFieldsRules($rules);
-
-        if (!$validator->validate()) {
-            return Result::failure("Arena failed validation.", $validator->errors());
+        if (empty($arenas)) {
+            return Result::failure("No arenas provided to create.");
         }
 
-        $sql = "INSERT INTO arenas (name, city, province, capacity, team_id)
-                VALUES (:name, :city, :province, :capacity, :team_id)";
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute([
-            ':name'     => $data['name'],
-            ':city'     => $data['city'],
-            ':province' => $data['province'],
-            ':capacity' => $data['capacity'],
-            ':team_id'  => $data['team_id']
-        ]);
+        $inserted = [];
+        $errors = [];
 
-        $id = $this->db->lastInsertId();
-        return Result::success(['id' => $id]);
-    }
+        foreach ($arenas as $index => $arena) {
+            // Type casting to string for safety
+            foreach (["arena_id", "capacity", "year_built" , "team_id"] as $field) {
+                if (isset($arena[$field])) {
+                    $arena[$field] = (string)$arena[$field];
+                }
+            }
 
-    public function update(int $id, array $data): Result
-    {
-        // Validation rules
-        $rules = [
-            'name'     => ['required'],
-            'city'     => ['required'],
-            'province' => ['required'],
-            'capacity' => ['required', 'integer'],
-            'team_id'  => ['required', 'integer'],
-        ];
 
-        $validator = new Validator($data, [], 'en');
-        $validator->mapFieldsRules($rules);
+            //* Validator Rules
+            $rules = array(
 
-        if (!$validator->validate()) {
-            return Result::failure("Arena failed validation.", $validator->errors());
+                "arena_name" => [
+                    'required',
+                    ['regex', '/^[A-Za-z]{2,30}(?: [A-Za-z]{2,30})*$/']
+                ],
+
+                "arena_id" => [
+                    'required',
+                    'integer',
+                    ['min', '1'],
+                    function () use ($arena, $this) {
+                        return $this->arenasModel->checkArenaIdExists((int)$arena["arena_id"]) == 0;
+                    }, 'does not exist!'],
+                    [function() use ($arena) {
+                        return !$this->arenasModel->checkArenaIdExists((int)$arena["arena_id"]);
+                    }, 'is already in use!'],
+
+                "team_id" => [
+                    'integer',
+                    [function() use ($arena) {
+                        return !$this->arenasModel->checkTeamIDInUse((int)$arena["team_id"]);
+                    }, 'is already in use!']
+                ],
+                "year_built" => [
+                    'required',
+                    'integer',
+                    ['min', '1800'],
+                    ['max', date('Y')]
+                ],
+                "capacity" => [
+                    'required',
+                    'integer',
+                    ['min', '0']
+                ],
+                "city" => [
+                    'required',
+                    ['regex', '/^[A-Za-z\s\'\-]+$/']
+                ],
+                "province" => [
+                    'required',
+                    ['regex', '/^[A-Za-z\s\'\-]+$/']
+                ]
+
+            );
+
+            $validator = new Validator($arena, [], 'en');
+            $validator->mapFieldsRules($rules);
+
+            if (!$validator->validate()) {
+                $errors[$index] = $validator->errors();
+            }
         }
 
-        $sql = "UPDATE arenas
-                SET name = :name, city = :city, province = :province, capacity = :capacity, team_id = :team_id
-                WHERE id = :id";
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute([
-            ':name'     => $data['name'],
-            ':city'     => $data['city'],
-            ':province' => $data['province'],
-            ':capacity' => $data['capacity'],
-            ':team_id'  => $data['team_id'],
-            ':id'       => $id
-        ]);
+        if (!empty($errors)) {
+            return Result::failure("Validation failed for some arenas.", $errors);
+        }
 
-        return Result::success(['updated' => $stmt->rowCount()]);
+        foreach ($arenas as $index => $arena) {
+            $insertedArenas[$index] = $arena;
+            $this->arenasModel->createArena($arena);
+
+        }
+
+        return Result::success("Arenas successfully created.", $inserted);
     }
 
-    public function delete(int $id): Result
+     /**
+     * Handles updating arena(s) into database.
+     *
+     * @param array $arenas The incoming data to update.
+     *
+     * @return Result JSON response to encapsulate and return the result of Put Operation.
+     *
+     */
+    public function updateArenas(array $arenas): Result
     {
-        $stmt = $this->db->prepare("DELETE FROM arenas WHERE id = :id");
-        $stmt->execute([':id' => $id]);
+        if (empty($arenas)) {
+            return Result::failure("No arenas provided for updating.");
+        }
 
-        return Result::success(['deleted' => $stmt->rowCount()]);
+        $updated = [];
+        $errors = [];
+
+        foreach ($arenas as $index => $arena) {
+            foreach (["arena_id","arena_name", "capacity", "year_built","team_id", "city", "province"] as $field) {
+                if (isset($arena[$field])) {
+                    $arena[$field] = (string)$arena[$field];
+                }
+            }
+
+             //* Validator Rules
+             $rules = array(
+
+                "arena_name" => [
+                    'required',
+                    ['regex', '/^[A-Za-z]{2,30}(?: [A-Za-z]{2,30})*$/']
+                ],
+
+                "arena_id" => [
+                    'required',
+                    'integer',
+                    ['min', '1'],
+                    function () use ($arena, $this) {
+                        return $this->arenasModel->checkArenaIdExists((int)$arena["arena_id"]) == 0;
+                    }, 'does not exist!'],
+                    [function() use ($arena) {
+                        return !$this->arenasModel->checkArenaIdExists((int)$arena["arena_id"]);
+                    }, 'is already in use!'],
+
+                "team_id" => [
+                    'integer',
+                    [function() use ($arena) {
+                        return !$this->arenasModel->checkTeamIDInUse((int)$arena["team_id"]);
+                    }, 'is already in use!']
+                ],
+                "year_built" => [
+                    'required',
+                    'integer',
+                    ['min', '1800'],
+                    ['max', date('Y')]
+                ],
+                "capacity" => [
+                    'required',
+                    'integer',
+                    ['min', '0']
+                ],
+                "city" => [
+                    'required',
+                    ['regex', '/^[A-Za-z\s\'\-]+$/']
+                ],
+                "province" => [
+                    'required',
+                    ['regex', '/^[A-Za-z\s\'\-]+$/']
+                ]
+
+            );
+
+            $validator = new Validator($arena, [], 'en');
+            $validator->mapFieldsRules($rules);
+
+            if (!$validator->validate()) {
+                $errors[$index] = $validator->errors();
+            }
+        }
+
+        if (!empty($errors)) {
+            return Result::failure("Validation failed for some arenas.", $errors);
+        }
+
+        foreach($arenas as $index => $arena) {
+            $originalArenas[$index] = $this->arenasModel->getArenaById($arena['arena_id']);
+            $updated[$index] = $arena;
+            $this->arenasModel->updateArenas($arena, (int)$arena['arena_id']);
+        }
+
+        return Result::success("Arena(s) were successfully inserted!", ["Original Arena(s)" => $originalArenas, "Updated Arena(s)" => $updated]);
+    }
+
+    /**
+     * Handles deleting arena(s) into database.
+     *
+     * @param array $arenas The incoming data to delete.
+     *
+     * @return Result JSON response to encapsulate and return the result of Delete Operation.
+     *
+     */
+    public function deleteArenas(array $arenas): Result
+    {
+        if (empty($arenas)) {
+            return Result::failure("No arenas provided for deletion.");
+        }
+
+        $deleted = [];
+        $errors = [];
+
+        foreach ($arenas as $index => $arena) {
+            if (isset($arena["arena_id"])) {
+                $arena["arena_id"] = (string)$arena["arena_id"];
+            }
+
+            $rules = [
+                "arena_id" => [
+                    'required',
+                    'integer',
+                    ['min', '1'],
+                    function () use ($arena, $this) {
+                        return $this->arenasModel->checkArenaIdExists((int)$arena["arena_id"]) == 0;
+                    }, 'does not exist!'],
+                    [function() use ($arena) {
+                        return !$this->arenasModel->checkArenaIdExists((int)$arena["arena_id"]);
+                    }, 'is already in use!']
+
+                ];
+
+            $validator = new Validator($arena, [], 'en');
+            $validator->mapFieldsRules($rules);
+
+            if (!$validator->validate()) {
+                $errors[$index] = $validator->errors();
+            }
+        }
+
+        if (!empty($errors)) {
+            return Result::failure("Validation failed for some arenas.", $errors);
+        }
+
+        foreach ($arenas as $arena) {
+            $this->arenasModel->deleteArenaById((int)$arena["arena_id"]);
+            $deleted[] = $arena;
+            if (empty($deleted[$index])) {
+                return Result::failure("No matching record for arena_id found.", $errors);
+            }
+
+        }
+
+        return Result::success("Arenas successfully deleted.", $deleted);
     }
 }
