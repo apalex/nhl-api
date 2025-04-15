@@ -48,13 +48,7 @@ class GamesService
             return Result::failure("Can't create game! Invalid input!", $validator->errors());
         }
 
-        //? Check if game_id is already used, home, away team_id and arena id exists in db
-        if ($this->games_model->getGamesById($game_data["game_id"])) {
-            return Result::failure("The game_id already exists in the database!", [
-                "game_id" => ["Game ID {$game_data['game_id']} is already used!"]
-            ]);
-        }
-
+        //? Check if home, away team_id and arena id exists in db
         if (!$this->games_model->checkTeamIDExists((int) $game_data["home_team_id"])) {
             return Result::failure("Home team does not exist!", [
                 "home_team_id" => ["Home Team ID {$game_data['home_team_id']} is not found in the database!"]
