@@ -187,6 +187,25 @@ class TeamsModel extends BaseModel
     }
 
     /**
+     * Checks if a given team ID exists in the database.
+     *
+     * @param int $team_id The ID of the team to check.
+     *
+     * @return array Returns the team record if found, else empty array.
+     */
+    public function checkTeamIDExists(int $team_id)
+    {
+
+        //* SQL Query
+        $sql = "SELECT * FROM teams WHERE team_id = :team_id";
+
+        //* Store in a var if fetchSingle did not find anything, then can return an empty array
+        $result = $this->fetchSingle($sql, ['team_id' => $team_id]);
+
+        return $result !== false ? $result : [];
+    }
+
+    /**
      * Checks if a given coach ID exists in the database.
      *
      * @param int $coach_id The ID of the coach to check.
@@ -261,6 +280,7 @@ class TeamsModel extends BaseModel
     /**
      * Updates a team by its ID.
      *
+     * @param array $teams The array of teams to update.
      * @param string $team_id The ID of the team to update.
      *
      * @return void

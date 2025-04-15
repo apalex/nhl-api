@@ -8,6 +8,7 @@ use App\Models\ArenasModel;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Exception\HttpNotFoundException;
+use App\Services\ArenasService;
 
 /**
  * Controller for handling arena-related requests.
@@ -17,7 +18,7 @@ class ArenasController extends BaseController
     /**
      * @var ArenasModel $arenas_model The model handling arena data.
      */
-    public function __construct(private ArenasModel $arenas_model) {}
+    public function __construct(private ArenasModel $arenas_model, private ArenasService $arenasService) {}
 
     /**
      * Handles requests to retrieve multiple arenas with optional filters.
@@ -87,7 +88,7 @@ class ArenasController extends BaseController
      * @param array $uri_args The URI arguments (e.g., arena_id).
      * @return Response The JSON response containing the arena details.
      */
-    public function  handleGetArenaByID(Request $request, Response $response, array $uri_args): Response
+    public function  handleGetArenasByID(Request $request, Response $response, array $uri_args): Response
     {
         // Validate HTTP Method Sent
         $this->validateHTTPMethod($request);
@@ -130,7 +131,7 @@ class ArenasController extends BaseController
      * @param array $uri_args Route arguments containing team ID.
      * @return Response The JSON response containing related arenas.
      */
-    public function handleGetArenaGames(Request $request, Response $response, array $uri_args): Response
+    public function handleGetArenasGames(Request $request, Response $response, array $uri_args): Response
     {
 
         // Validate HTTP Method Sent
@@ -157,7 +158,7 @@ class ArenasController extends BaseController
         $arena_info = $this->arenas_model->getGamesByArenaId($arena_id, $filters);
 
         //* Call Validate Player Info
-        $this->validateArenaGame($arena_info, $request);
+        $this->validateArenasGame($arena_info, $request);
 
         return $this->renderJson($response, [
             "status" => array(
@@ -184,7 +185,7 @@ class ArenasController extends BaseController
         }
     }
 
-     /**
+    /**
      * Validates the order parameter.
      *
      * @param string $orderBy The sorting order to validate.
@@ -201,23 +202,23 @@ class ArenasController extends BaseController
     }
 
     /**
-    * Validates the game type format.
-    *
-    * @param string $game_type The game type to validate.
-    * @param Request $request The HTTP request.
-    *
-    * @throws HttpInvalidInputException If the game type is not valid.
-    */
-     private function validateGameType(mixed $game_type, Request $request)
-     {
+     * Validates the game type format.
+     *
+     * @param string $game_type The game type to validate.
+     * @param Request $request The HTTP request.
+     *
+     * @throws HttpInvalidInputException If the game type is not valid.
+     */
+    private function validateGameType(mixed $game_type, Request $request)
+    {
 
-         $allowed = ['regular', 'playoffs', 'preseason'];
+        $allowed = ['regular', 'playoffs', 'preseason'];
 
-         if (!in_array($game_type, $allowed)) {
-             //! provided sort filter invalid
-             throw new HttpInvalidInputException($request, "The provided game type is invalid. Expected input: ['regular', 'playoffs', 'preseason']");
-         }
-     }
+        if (!in_array($game_type, $allowed)) {
+            //! provided sort filter invalid
+            throw new HttpInvalidInputException($request, "The provided game type is invalid. Expected input: ['regular', 'playoffs', 'preseason']");
+        }
+    }
 
     /**
      * Validates the arena name format.
@@ -313,50 +314,165 @@ class ArenasController extends BaseController
      *
      * @throws HttpInvalidInputException If no arena game record is found.
      */
-    private function validateArenaGame($arena_info, Request $request)
+    private function validateArenasGame($arena_info, Request $request)
     {
         if (count($arena_info['games']) <= 0) {
             //! no matching record in the db
             throw new HttpInvalidInputException($request, "No matching record for arena games found.");
         }
     }
-    public function create(Request $request, Response $response, $args): Response
-{
-    $data = $request->getParsedBody();
-    $service = new ArenasService($this->db);
-    $result = $service->create($data);
 
-    if (!$result->isSuccess()) {
-        throw new HttpInvalidInputException(json_encode($result->getData()));
+
+    //* ROUTE: POST /arenas
+
+    /**
+     * Handles inserting arena(s) into database.
+     *
+     * @param Request $request The incoming HTTP request.
+     * @param Response $response The outgoing HTTP response.
+     *
+     * @return Response JSON response containing HTTP response to the request.
+     */
+    public function handlePostArenas(Request $request, Response $response): Response
+    {
+        //* Validate HTTP Method Sent
+        $this->validateHTTPMethod($request, ['POST']);
+
+        //* Fetch Body
+        $arena_info = $request->getParsedBody();
+
+        //* Send Body to Service
+        $result = $this->arenasService->createArenas($arena_info);
+
+        //* Valid HTTP Response Message Structure
+        if ($result->isSuccess()) {
+            $status = [
+                "Type" => "successful",
+                'Code' => 201,
+                "Content-Type" => "application/json",
+                'Message' => $result->getMessage()
+            ];
+            $payload = [
+                "status" => $status,
+                "arena(s)" => $result->getData()
+            ];
+            return $this->renderJson($response, $payload, 201);
+        }
+        //* Invalid HTTP Response Message Structure
+        else {
+            $status = [
+                "Type" => "error",
+                'Code' => 422,
+                'Content-Type' => 'application/json',
+                'Message' => $result->getMessage()
+            ];
+            $payload = [
+                "status" => $status,
+                "details" => $result->getErrors()
+            ];
+            return $this->renderJson($response, $payload, 422);
+        }
     }
 
-    return $this->respondWithData($response, $result->getData(), 201);
-}
+    //* ROUTE: PUT /arenas
 
-public function update(Request $request, Response $response, $args): Response
-{
-    $id = (int)$args['id'];
-    $data = $request->getParsedBody();
-    $service = new ArenasService($this->db);
-    $result = $service->update($id, $data);
+    /**
+     * Handles updating arena(s) into database.
+     *
+     * @param Request $request The incoming HTTP request.
+     * @param Response $response The outgoing HTTP response.
+     *
+     * @return Response JSON response containing HTTP response to the request.
+     */
+    public function handlePutArenas(Request $request, Response $response): Response
+    {
+        //* Validate HTTP Method Sent
+        $this->validateHTTPMethod($request, ['PUT']);
 
-    if (!$result->isSuccess()) {
-        throw new HttpInvalidInputException(json_encode($result->getData()));
+        //* Fetch Body
+        $arena_info = $request->getParsedBody();
+
+        //* Send Body to Service
+        $result = $this->arenasService->updateArenas($arena_info);
+
+        //* Valid HTTP Response Message Structure
+        if ($result->isSuccess()) {
+            $status = [
+                "Type" => "successful",
+                'Code' => 200,
+                "Content-Type" => "application/json",
+                'Message' => $result->getMessage()
+            ];
+            $payload = [
+                "status" => $status,
+                "arena(s)" => $result->getData()
+            ];
+            return $this->renderJson($response, $payload, 200);
+        }
+        //* Invalid HTTP Response Message Structure
+        else {
+            $status = [
+                "Type" => "error",
+                'Code' => 422,
+                'Content-Type' => 'application/json',
+                'Message' => $result->getMessage()
+            ];
+            $payload = [
+                "status" => $status,
+                "details" => $result->getErrors()
+            ];
+            return $this->renderJson($response, $payload, 422);
+        }
     }
 
-    return $this->respondWithData($response, $result->getData());
-}
+    //* ROUTE: DELETE /arenas
 
-public function delete(Request $request, Response $response, $args): Response
-{
-    $id = (int)$args['id'];
-    $service = new ArenasService($this->db);
-    $result = $service->delete($id);
+    /**
+     * Handles deleting arena(s) from database.
+     *
+     * @param Request $request The incoming HTTP request.
+     * @param Response $response The outgoing HTTP response.
+     *
+     * @return Response JSON response containing HTTP response to the request.
+     */
+    public function handleDeleteArenas(Request $request, Response $response): Response
+    {
+        //* Validate HTTP Method Sent
+        $this->validateHTTPMethod($request, ['DELETE']);
 
-    if ($result->getData()['deleted'] === 0) {
-        return $this->respondWithError($response, "Arena not found", 404);
+        //* Fetch Body
+        $arena_info = $request->getParsedBody();
+
+        //* Send Body to Service
+        $result = $this->arenasService->deleteArenas($arena_info);
+
+        //* Valid HTTP Response Message Structure
+        if ($result->isSuccess()) {
+            $status = [
+                "Type" => "successful",
+                'Code' => 200,
+                "Content-Type" => "application/json",
+                'Message' => $result->getMessage()
+            ];
+            $payload = [
+                "status" => $status,
+                "arena(s)" => $result->getData()
+            ];
+            return $this->renderJson($response, $payload, 200);
+        }
+        //* Invalid HTTP Response Message Structure
+        else {
+            $status = [
+                "Type" => "error",
+                'Code' => 422,
+                'Content-Type' => 'application/json',
+                'Message' => $result->getMessage()
+            ];
+            $payload = [
+                "status" => $status,
+                "details" => $result->getErrors()
+            ];
+            return $this->renderJson($response, $payload, 422);
+        }
     }
-
-    return $this->respondWithData($response, $result->getData());
-}
 }
