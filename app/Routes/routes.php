@@ -5,6 +5,8 @@ declare(strict_types=1);
 use App\Controllers\AboutController;
 use App\Controllers\ArenasController;
 use App\Controllers\GamesController;
+use App\Controllers\LoginController;
+use App\Controllers\RegisterController;
 use App\Controllers\TeamsController;
 use App\Helpers\DateTimeHelper;
 use Psr\Http\Message\ResponseInterface as Response;
@@ -69,6 +71,10 @@ return static function (Slim\App $app): void {
     $app->post('/games', [GamesController::class, 'handleCreateGame']);
 
     $app->post('/arenas', [ArenasController::class, 'handlePostArenas']);
+
+    $app->post('/register', [RegisterController::class, 'handlePostUser']);
+
+    $app->post('/login', [LoginController::class, 'handlePostLogin']);
 
     //* ROUTE: PUT
     $app->put('/teams', [TeamsController::class, 'handlePutTeams']);
