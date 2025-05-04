@@ -153,6 +153,8 @@ Mandatory Fields:
 
 ### PUT /teams
 
+**Example:**
+
 ```json
 [
   {
@@ -169,6 +171,8 @@ Mandatory Fields:
 ```
 
 ### DELETE /teams
+
+**Example:**
 
 ```json
 [
