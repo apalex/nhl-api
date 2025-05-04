@@ -17,7 +17,7 @@ class RegisterService
     public function __construct(private UserModel $user_model) {}
 
     /**
-     * Handles inserting a user into database.
+     * Handles inserting a user into the database.
      *
      * @param array $user The incoming data to insert.
      *
@@ -26,8 +26,6 @@ class RegisterService
      */
     function createUser(array $user) : Result
     {
-        $errors = [];
-
         //* Validate Received Data
         //! Check if empty
         if (empty($user)) {
@@ -35,41 +33,42 @@ class RegisterService
         }
 
         //* Validator
-        foreach($user as $index => $u) {
-            //* Validator Rules
-            $rules = array(
-                "role" => [
-                    'required',
-                    // ['regex', '']
-                ],
-                "username" => [
-                    'required',
-                    // ['regex', '']
-                ],
-                "email" => [
-                    'required',
-                    // ['regex', '']
-                ],
-                "password" => [
-                    'required',
-                    // ['regex', '']
-                ]
-            );
+        $rules = array(
+            "role" => [
+                'required',
+                ['in', ['user', 'admin']]
+            ],
+            "username" => [
+                'required',
+                'alphaNum',
+                ['lengthMin', 3],
+                ['lengthMax', 20],
+                ['regex', '/^[a-zA-Z0-9_]+$/'],
+                [function() use ($user) {
+                    return !$this->user_model->checkUsernameInUse($user["username"]);
+                }, 'is already in use!']
+            ],
+            "email" => [
+                'required',
+                'email',
+                [function() use ($user) {
+                    return !$this->user_model->checkEmailInUse($user["email"]);
+                }, 'is already in use!']
+            ],
+            "password" => [
+                'required',
+                ['lengthMin', 6],
+                ['lengthMax', 40]
+            ]
+        );
 
-            //* Batch Validate
-            $validator = new Validator($u, [], 'en');
-            $validator->mapFieldsRules($rules);
-
-            //* Invalid HTTP Response Message
-            if (!$validator->validate()) {
-                $errors[$index] = $validator->errors();
-            }
-        }
+        $validator = new Validator($user, [], 'en');
+        $validator->mapFieldsRules($rules);
 
         //* Result Pattern
         //* Unsuccessful
-        if (!empty($errors)) {
-            return Result::failure("User failed validation.", $errors);
+        if (!$validator->validate()) {
+            return Result::failure("User failed validation.", $validator->errors());
         }
 
         //* Successful
@@ -77,7 +76,7 @@ class RegisterService
             //* Insert new resource into model
             $this->user_model->insertUser($user);
 
-            return Result::success("User was successfully inserted!", $user);
+            return Result::success("User was successfully created!", $user);
         }
     }
 }

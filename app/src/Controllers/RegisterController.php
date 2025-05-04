@@ -24,7 +24,7 @@ class RegisterController extends BaseController
     //* ROUTE: POST /register
 
     /**
-     * Handles inserting user into database.
+     * Handles inserting a user into the database.
      *
      * @param Request $request The incoming HTTP request.
      * @param Response $response The outgoing HTTP response.
