@@ -37,6 +37,12 @@ class GamesModel extends BaseModel
             $filter_values["game_date"] = $filters["game_date"];
         }
 
+        //? Home Team ID Filter
+        if (isset($filters["home_team_id"])) {
+            $sql .= " AND home_team_id = :home_team_id ";
+            $filter_values["home_team_id"] = $filters["home_team_id"];
+        }
+
         //? Tournament Type Filter
         if (isset($filters["game_type"])) {
             $sql .= " AND game_type LIKE CONCAT(:game_type, '%') ";
