@@ -11,6 +11,7 @@ use App\Controllers\TeamsController;
 use App\Helpers\DateTimeHelper;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
+use App\Controllers\AuthController;
 
 
 return static function (Slim\App $app): void {
@@ -89,4 +90,27 @@ return static function (Slim\App $app): void {
     $app->delete('/games', [GamesController::class, 'handleDeleteGame']);
 
     $app->delete('/arenas', [ArenasController::class, 'handleDeleteArenas']);
+    //*Login Routes:
+    /**
+     * Registers a new user.
+     *
+     * @param Request $request
+     * @param Response $response
+     * @return Response
+     */
+    $app->post('/register', function ($request, $response, $args) use ($container) {
+        $controller = new AuthController($container);
+        return $controller->register($request, $response);
+    });
+    /**
+     * Logs in an existing user.
+     *
+     * @param Request $request
+     * @param Response $response
+     * @return Response
+     */
+    $app->post('/login', function ($request, $response, $args) use ($container) {
+        $controller = new AuthController($container);
+        return $controller->login($request, $response);
+    });
 };
