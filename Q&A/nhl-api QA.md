@@ -308,3 +308,120 @@ Must include a game ID to delete
   }
 ]
 ```
+## /arenas Resource
+
+### GET /arenas
+
+Retrieves a list of arenas.
+
+**Example:**  
+`/arenas`
+
+#### Pagination
+
+- `page` (integer): Page number to retrieve. Default is 1.
+- `page_size` (integer): Number of results per page. Default is 3.
+
+**Example:**  
+`/arenas?page=2&page_size=5`
+
+#### Filtering
+
+- `arena_name` (string): Partial match supported.
+- `city` (string)
+- `capacity` (integer)
+
+**Example:**  
+`/arenas?arena_name=Bell&city=Montreal&capacity=21000`
+
+#### Sorting
+
+- `sort_by` (string): `arena_name`, `city`, `capacity`
+- `order_by` (string): `asc`, `desc`
+
+**Example:**  
+`/arenas?sort_by=capacity&order_by=desc`
+
+---
+
+### GET /arenas/{arena_id}
+
+Retrieves a specific arena by ID.
+
+**Example:**  
+`/arenas/3`
+
+---
+
+### POST /arenas
+
+Creates one or more arena entries.
+
+```json
+[
+  {
+    "arena_name": "Scotiabank Arena",
+    "city": "Toronto",
+    "capacity": 19800
+  }
+]
+```
+
+PUT /arenas
+Updates arena data.
+arena_id is required. Other fields are optional but at least one is needed.
+
+
+```json
+[
+  {
+    "arena_id": 3,
+    "capacity": 21000,
+    "city": "Ottawa"
+  }
+]
+```
+
+DELETE /arenas
+Deletes one or more arenas by ID.
+
+```json
+[
+  {
+    "arena_id": 3
+  }
+]
+
+```
+
+Incorrect Inputs
+POST /arenas
+```json
+[
+  {
+    "arena_name": 1234,
+    "city": "Toronto",
+    "capacity": "twenty thousand"
+  }
+]
+```
+PUT /arenas
+```json
+[
+  {
+    "capacity": 19000
+  },
+  {
+    "arena_id": "three",
+    "city": 456
+  }
+]
+```
+DELETE /arenas
+```json
+[
+  {
+    "id": "remove arena 3"
+  }
+]
+```
