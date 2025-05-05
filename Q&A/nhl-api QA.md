@@ -8,9 +8,9 @@
 
 Retrieves a list of teams from the database. The response includes metadata for pagination and supports query parameters for filtering and sorting.
 
-**Example:**
+## Examples of Correct Inputs for /teams
 
-`/teams`
+**Example:** `/teams`
 
 #### Pagination
 
@@ -69,6 +69,15 @@ Retrieves games played by a specific team.
 
 ### POST /teams
 
+Mandatory Field(s):
+
+- coach_id (integer): Coach ID must exist and not be in use by another team.
+- arena_id (integer): Arena ID must exist and not be in use by another team.
+- founding_year (integer)
+- championships (integer)
+- general_manager (string)
+- abbreviation (string): Format: Must be 3 letters.
+
 ```json
 [
   {
@@ -79,6 +88,9 @@ Retrieves games played by a specific team.
     "championships": 100,
     "general_manager": "Zinedine Zidane",
     "abbreviation": "RMA"
+  },
+  {
+    Etc.
   }
 ]
 ```
@@ -86,6 +98,10 @@ Retrieves games played by a specific team.
 ---
 
 ### PUT /teams
+
+Mandatory Field(s):
+
+- `team_id` (integer)
 
 ```json
 [
@@ -96,6 +112,9 @@ Retrieves games played by a specific team.
     "championships": 199,
     "general_manager": "Pep Guardiola",
     "abbreviation": "YBC"
+  },
+  {
+    Etc.
   }
 ]
 ```
@@ -104,19 +123,26 @@ Retrieves games played by a specific team.
 
 ### DELETE /teams
 
+Mandatory Field(s):
+
+- `team_id` (integer)
+
 ```json
 [
   {
     "team_id": 8
+  },
+  {
+    Etc.
   }
 ]
 ```
 
 ---
 
-### Incorrect Inputs
+### Examples of Incorrect Inputs for /teams
 
-#### POST /teams
+### POST /teams
 
 ```json
 [
@@ -124,19 +150,20 @@ Retrieves games played by a specific team.
     "team_name": "Real Madrid",
     "coach_id": 1,
     "arena_id": 1,
-    "founding_year": "1902s",
-    "championships": "_100",
+    "founding_year": "1902s",             // Must be Integer
+    "championships": _100,                // Must be Integer
     "general_manager": "Zinedine Zidane",
-    "abbreviation": "RMA1213"
+    "abbreviation": "RMA1213"             // Abbreviation must be 3 letters
   }
 ]
 ```
 
-#### PUT /teams
+### PUT /teams
 
 ```json
 [
   {
+                                        // Missing Team ID
     "team_name": "Young Boys",
     "founding_year": 2001,
     "championships": 199,
@@ -145,12 +172,12 @@ Retrieves games played by a specific team.
 ]
 ```
 
-#### DELETE /teams
+### DELETE /teams
 
 ```json
 [
   {
-    "team_id": 8987987
+    "team_id": P-898-7987           // Incorrect Team ID Format
   }
 ]
 ```
@@ -159,9 +186,7 @@ Retrieves games played by a specific team.
 
 ## /games Resource
 
-# API Documentation for `/games` Resource
-
-This document gives the accepted inputs and behaviors for all operations related to the `/games` endpoint.
+Retrieves a list of games from the database. The response includes metadata for pagination and supports query parameters for filtering and sorting.
 
 ## Examples of Correct Inputs for /games
 
@@ -170,20 +195,20 @@ This document gives the accepted inputs and behaviors for all operations related
 ---
 
 Supports:
+
 - **Pagination**: `page`, `page_size`
 - **Filtering**: `game_date` (string, format `YYYY-MM-DD`), `game_type` (string: `regular`, `playoffs`, `preseason`)
 - **Sorting**: `sort_by`, `order_by`
 
-Example:
-/games?page=1&page_size=5&game_date=2024-10-01&game_type=regular&sort_by=home_score&order_by=desc
+**Example:** `/games?page=1&page_size=5&game_date=2024-10-01&game_type=regular&sort_by=home_score&order_by=desc`
 
 ---
 
 ### GET /games/{game_id}
+
 Returns the details of a specific game.
 
-Example:
-/games/12
+**Example:** `/games/12`
 
 ---
 
@@ -192,8 +217,7 @@ Supports:
 - **Filtering**: `first_name` (string), `goals_scored` (integer), `assist` (integer), `sog` (integer)
 - **Pagination**: `page`, `page_size`
 
-Example:
-/games/12/stats?first_name=Connor&goals_scored=2&page=1&page_size=10
+**Example:** `/games/12/stats?first_name=Connor&goals_scored=2&page=1&page_size=10`
 
 ---
 
@@ -220,10 +244,10 @@ Example:
 
 ### PUT /games
 
----
+Mandatory Field(s):
 
-game_id is mandatory
-everything else is optional, but a minimum of one field is required
+- `game_id` (integer)
+
 ```json
 [
   {
@@ -246,6 +270,7 @@ everything else is optional, but a minimum of one field is required
 ---
 
 Must include a game ID to delete
+
 ```json
 [
   {
@@ -305,6 +330,139 @@ Must include a game ID to delete
 [
   {
     "id": P-02220                     //missing 'game_id' key or should be an integer
+  }
+]
+```
+
+## /arenas Resource
+
+### GET /arenas
+
+Retrieves a list of arenas from the database. The response includes metadata for pagination and supports query parameters for filtering and sorting.
+
+**Example:** `/arenas`
+
+#### Pagination
+
+- `page` (integer): Page number to retrieve. Default is 1.
+- `page_size` (integer): Number of results per page. Default is 3.
+
+**Example:**  `/arenas?page=2&page_size=5`
+
+#### Filtering
+
+- `arena_name` (string): Partial match supported.
+- `city` (string): Partial match supported.
+- `capacity` (integer)
+
+**Example:**  `/arenas?arena_name=Bell&city=Montreal&capacity=21000`
+
+#### Sorting
+
+- `sort_by` (string): `arena_name`, `city`, `capacity`
+- `order_by` (string): `asc`, `desc`
+
+**Example:**  `/arenas?sort_by=capacity&order_by=desc`
+
+---
+
+### GET /arenas/{arena_id}
+
+Retrieves a specific arena by ID.
+
+**Example:**  `/arenas/3`
+
+---
+
+### POST /arenas
+
+Creates one or more arena entries.
+
+```json
+[
+  {
+    "arena_name": "Scotiabank Arena",
+    "city": "Toronto",
+    "capacity": 19800
+  }
+]
+```
+
+---
+
+### PUT /arenas
+
+Mandatory Field(s):
+
+- `arena_id` (integer)
+
+```json
+[
+  {
+    "arena_id": 3,
+    "capacity": 21000,
+    "city": "Ottawa"
+  }
+]
+```
+
+---
+
+### DELETE /arenas
+
+Mandatory Field(s):
+
+- `arena_id` (integer)
+
+```json
+[
+  {
+    "arena_id": 3
+  }
+]
+
+```
+
+---
+
+### Examples of Incorrect Inputs for /arenas
+
+### POST /arenas
+
+```json
+[
+  {
+    "arena_name": 1234,
+    "city": "Toronto",
+    "capacity": "twenty thousand"
+  }
+]
+```
+
+---
+
+### PUT /arenas
+
+```json
+[
+  {
+    "capacity": 19000
+  },
+  {
+    "arena_id": "three",
+    "city": 456
+  }
+]
+```
+
+---
+
+### DELETE /arenas
+
+```json
+[
+  {
+    "id": "remove arena 3"
   }
 ]
 ```

@@ -1,7 +1,8 @@
 <?php
 
 declare(strict_types=1);
-//Settings for  Dev environment
+
+// Settings for Dev environment
 
 function myCustomErrorHandler(int $errNo, string $errMsg, string $file, int $line)
 {
@@ -11,7 +12,6 @@ function myCustomErrorHandler(int $errNo, string $errMsg, string $file, int $lin
 set_error_handler('myCustomErrorHandler');
 
 return function (array $settings): array {
-    // Error reporting
     // Enable all error reporting for dev environment.
     error_reporting(E_ALL);
     ini_set('display_errors', '1');
@@ -19,10 +19,21 @@ return function (array $settings): array {
 
     $settings['error']['display_error_details'] = true;
 
-    // Database
-    $settings['db']['database'] = 'nhl';
-    $settings['db']['hostname'] = 'localhost';
-    $settings['db']['port'] = '3306';
+    // Database configuration
+    $settings['db'] = [
+        'host'     => 'localhost',
+        'port'     => '3306',
+        'database' => 'nhl',
+        'username' => 'root',
+        'password' => '',
+        'options'  => [
+            PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        ]
+    ];
+
+    // JWT secret used in AuthController
+    $_ENV['JWT_SECRET'] = '1234';
 
     return $settings;
 };
