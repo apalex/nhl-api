@@ -73,9 +73,9 @@ return static function (Slim\App $app): void {
 
     $app->post('/arenas', [ArenasController::class, 'handlePostArenas']);
 
-    $app->post('/register', [RegisterController::class, 'handlePostUser']);
 
-    $app->post('/login', [LoginController::class, 'handlePostLogin']);
+
+
 
     //* ROUTE: PUT
     $app->put('/teams', [TeamsController::class, 'handlePutTeams']);
@@ -98,8 +98,9 @@ return static function (Slim\App $app): void {
      * @param Response $response
      * @return Response
      */
-    $app->post('/register', function ($request, $response, $args) use ($container) {
-        $controller = new AuthController($container);
+    $app->post('/register', function ($request, $response, $args) use ($app) {
+        $container = $app->getContainer();
+        $controller = new AuthController($container->get(\App\Core\PDOService::class));
         return $controller->register($request, $response);
     });
     /**
@@ -109,8 +110,9 @@ return static function (Slim\App $app): void {
      * @param Response $response
      * @return Response
      */
-    $app->post('/login', function ($request, $response, $args) use ($container) {
-        $controller = new AuthController($container);
+    $app->post('/login', function ($request, $response, $args) use ($app) {
+        $container = $app->getContainer();
+        $controller = new AuthController($container->get(\App\Core\PDOService::class));
         return $controller->login($request, $response);
     });
 };

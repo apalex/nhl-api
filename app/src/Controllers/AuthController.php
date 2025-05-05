@@ -1,37 +1,35 @@
 <?php
+
+declare(strict_types=1);
+
 namespace App\Controllers;
 
-use Psr\Http\Message\ResponseInterface as Response;
-use Psr\Http\Message\ServerRequestInterface as Request;
-use App\Helpers\PasswordTrait;
-use App\Helpers\LogHelper;
-use Valitron\Validator;
+use App\Core\PDOService;
+use App\Validation\Validator;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
-
+use Psr\Http\Message\ResponseInterface as Response;
+use Psr\Http\Message\ServerRequestInterface as Request;
 
 /**
  * Handles user authentication and registration.
  */
-class AuthController {
-    use PasswordTrait;
-
-    private $db;
-    private $jwtSecret;
+class AuthController
+{
+    private PDOService $db;
 
     /**
-     * Constructor to initialize dependencies.
+     * AuthController constructor.
      *
-     * @param \Psr\Container\ContainerInterface $container Dependency container.
+     * @param PDOService $db Custom PDO wrapper for managing database connection.
      */
-    public function __construct($container) {
-        $this->db = $container->get('db');
-        $this->jwtSecret = $_ENV['JWT_SECRET'];
+    public function __construct(PDOService $db)
+    {
+        $this->db = $db;
     }
 
-
     /**
-     * Handles user registration by validating input, hashing the password, and storing user info.
+     * Registers a user by validating input, hashing the password, and inserting user info.
      *
      * @param Request $request The HTTP request containing user input.
      * @param Response $response The HTTP response object to write to.
@@ -40,8 +38,10 @@ class AuthController {
      *
      * @return Response The HTTP response with a success message.
      */
-    public function register(Request $request, Response $response): Response {
-        $data = $request->getParsedBody();
+    public function register(Request $request, Response $response): Response
+    {
+        $data = (array) $request->getParsedBody();
+
         $v = new Validator($data);
         $v->rule('required', ['email', 'password', 'username', 'role']);
         $v->rule('email', 'email');
@@ -51,77 +51,68 @@ class AuthController {
             throw new \Exception(json_encode($errors), 422);
         }
 
-        $stmt = $this->db->prepare("SELECT user_id FROM users WHERE email = ?");
+        $stmt = $this->db->getPDO()->prepare("SELECT user_id FROM users WHERE email = ?");
         $stmt->execute([$data['email']]);
+
         if ($stmt->fetch()) {
             throw new \Exception("Email already exists", 422);
         }
 
-        $passwordHash = $this->hashPassword($data['password']);
-        $stmt = $this->db->prepare("INSERT INTO ws_users (email, username, password, role) VALUES (?, ?, ?, ?)");
-        $stmt->execute([$data['email'], $data['username'], $passwordHash, $data['role']]);
+        $passwordHash = password_hash($data['password'], PASSWORD_DEFAULT);
 
-        LogHelper::logAccess([
-            'method' => 'POST',
-            'uri' => '/register',
-            'ip' => $_SERVER['REMOTE_ADDR'],
-            'user' => $data['email']
+        $stmt = $this->db->getPDO()->prepare(
+            "INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)"
+        );
+        $stmt->execute([
+            $data['username'],
+            $data['email'],
+            $passwordHash,
+            $data['role']
         ]);
 
-        $response->getBody()->write(json_encode(['message' => 'Account created successfully']));
-        return $response->withHeader('Content-Type', 'application/json')->withStatus(201);
+        $response->getBody()->write(json_encode(['message' => 'User registered successfully']));
+        return $response->withHeader('Content-Type', 'application/json');
     }
 
-
     /**
-     * Authenticates a user and generates a JWT on successful login.
+     * Logs in a user by validating credentials and generating a JWT token.
      *
-     * @param Request $request The HTTP request containing login credentials.
-     * @param Response $response The HTTP response object to write to.
+     * @param Request $request The HTTP request with login credentials.
+     * @param Response $response The HTTP response object for writing output.
      *
-     * @throws \Exception If validation fails or credentials are incorrect.
+     * @throws \Exception If the credentials are invalid or user not found.
      *
-     * @return Response The HTTP response containing a JWT token.
+     * @return Response The HTTP response containing the JWT token.
      */
-    public function login(Request $request, Response $response): Response {
-        $data = $request->getParsedBody();
-        $v = new Validator($data);
-        $v->rule('required', ['email', 'password']);
+    public function login(Request $request, Response $response): Response
+    {
+        $data = (array) $request->getParsedBody();
 
-        if (!$v->validate()) {
-            throw new \Exception(json_encode($v->errors()), 422);
+        if (!isset($data['email'], $data['password'])) {
+            throw new \Exception("Missing email or password", 400);
         }
 
-        $stmt = $this->db->prepare("SELECT * FROM users WHERE email = ?");
+        $stmt = $this->db->getPDO()->prepare("SELECT user_id, password, role FROM users WHERE email = ?");
         $stmt->execute([$data['email']]);
-        $user = $stmt->fetch();
+        $user = $stmt->fetch(\PDO::FETCH_ASSOC);
 
-        if (!$user || !$this->verifyPassword($data['password'], $user['password'])) {
-            LogHelper::logAccess([
-                'method' => 'POST',
-                'uri' => '/login',
-                'ip' => $_SERVER['REMOTE_ADDR'],
-                'user' => $data['email']
-            ]);
-            throw new \Exception("Invalid credentials", 401);
+        if (!$user) {
+            throw new \Exception("User not found", 401);
+        }
+        if (!password_verify($data['password'], $user['password'])) {
+            throw new \Exception("Invalid email or password", 401);
         }
 
+        $issuedAt = time();
+        $expirationTime = $issuedAt + 3600;
         $payload = [
-            'user_id' => $user['user_id'],
-            'email' => $user['email'],
-            'role' => $user['role'],
-            'iat' => time(),
-            'exp' => time() + 3600
+            'iat' => $issuedAt,
+            'exp' => $expirationTime,
+            'uid' => $user['user_id'],
+            'role' => $user['role']
         ];
 
-        $token = JWT::encode($payload, $this->jwtSecret, 'HS256');
-
-        LogHelper::logAccess([
-            'method' => 'POST',
-            'uri' => '/login',
-            'ip' => $_SERVER['REMOTE_ADDR'],
-            'user' => $user['email']
-        ]);
+        $token = JWT::encode($payload, $_ENV['JWT_SECRET'], 'HS256');
 
         $response->getBody()->write(json_encode(['token' => $token]));
         return $response->withHeader('Content-Type', 'application/json');
