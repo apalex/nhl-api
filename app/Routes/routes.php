@@ -12,7 +12,7 @@ use App\Helpers\DateTimeHelper;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use App\Controllers\AuthController;
-
+use App\Controllers\PERController;
 
 return static function (Slim\App $app): void {
 
@@ -73,7 +73,7 @@ return static function (Slim\App $app): void {
 
     $app->post('/arenas', [ArenasController::class, 'handlePostArenas']);
 
-
+    $app->post('/computePER', [PERController::class, 'handlePostPER']);
 
 
 
