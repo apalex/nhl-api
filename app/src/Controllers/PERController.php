@@ -57,6 +57,10 @@ class PERController extends BaseController
             return $this->renderJson($response, ["Error" => "Games played cannot be zero!"], 400);
         }
 
+        if ($goals < 0 || $assists < 0 || $plusMinus < 0 || $penaltyMinutes < 0 || $gamesPlayed < 0) {
+            return $this->renderJson($response, ["Error" => "Negative values are not allowed!"], 400);
+        }
+
         //? Step 4 - Call calculate function from model and input required fields
         $per = $this->perModel->calculatePER($goals, $assists, $plusMinus, $penaltyMinutes, $gamesPlayed);
 
