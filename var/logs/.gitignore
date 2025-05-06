@@ -1,2 +1,6 @@
 *
 !.gitignore
+
+
+access.log
+error.log
