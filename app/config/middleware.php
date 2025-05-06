@@ -14,6 +14,8 @@ declare(strict_types=1);
 use App\Handlers\CustomErrorHandler;
 use App\Middleware\ContentNegotiationMiddleware;
 use Slim\App;
+use App\Middleware\JwtMiddleware;
+
 
 /**
  * Middleware registration function.
@@ -23,8 +25,6 @@ use Slim\App;
  * @return void
  */
 return function (App $app): void {
-    // TODO: Add your middleware here.
-
     /**
      * Adds Content Negotiation Middleware to handle accepted content types.
      */
@@ -41,20 +41,23 @@ return function (App $app): void {
     $app->addRoutingMiddleware();
 
     /**
+     * Adds JWT Authentication & Authorization middleware:
+     * - Skips /login and /register
+     * - Allows GET for any authenticated user
+     * - Restricts POST/PUT/DELETE to admins only
+     */
+    $app->add(new JwtMiddleware('1234'));
+
+    /**
      * Adds Error Handling Middleware, which must be added last.
-     * This ensures proper error handling behavior in the application.
+     * This ensures proper JSON error responses.
      *
      * @var \Slim\Middleware\ErrorMiddleware $errorMiddleware
      */
     $errorMiddleware = $app->addErrorMiddleware(true, true, true);
 
     /**
-     * Sets the error handler to a Custom Error Handler to return JSON-formatted error responses.
+     * Sets the error handler to a Custom Error Handler for JSON formatting.
      */
     $errorMiddleware->setDefaultErrorHandler(CustomErrorHandler::class);
-
-    //!OLD ERROR HANDLER! $errorMiddleware->getDefaultErrorHandler()->forceContentType(APP_MEDIA_TYPE_JSON);
-
-    //! NOTE: You can override the default error handler with your custom error handler.
-    //* For more details, refer to Slim framework's documentation.
 };

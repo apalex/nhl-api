@@ -5,7 +5,11 @@ namespace App\Middleware;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 use Slim\Psr7\Response;
-
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Server\RequestHandlerInterface as RequestHandler;
+use Slim\Exception\HttpUnauthorizedException;
+use Slim\Exception\HttpForbiddenException;
 
 /**
  * Middleware to validate JWT tokens and authorize users.
@@ -13,42 +17,59 @@ use Slim\Psr7\Response;
 class JwtMiddleware
 {
     private $secret;
+
     /**
      * Initializes the middleware with the secret key.
      *
      * @param string $secret JWT secret key used for decoding tokens.
      */
-    public function __construct($secret)
+    public function __construct(string $secret)
     {
         $this->secret = $secret;
     }
+
     /**
      * Processes incoming requests and validates the JWT token.
      *
-     * @param ServerRequestInterface $request Incoming request with Authorization header.
-     * @param RequestHandlerInterface $handler The next request handler in the pipeline.
+     * @param Request        $request Incoming request with Authorization header.
+     * @param RequestHandler $handler The next request handler in the pipeline.
      *
-     * @return ResponseInterface Response with 401 if token is invalid or expired, or the next response if valid.
+     * @return ResponseInterface Response with 401 if token is invalid or expired,
+     *                           403 if not permitted, or the next response if valid.
+     *
+     * @throws HttpUnauthorizedException If the token is missing, malformed, or invalid.
+     * @throws HttpForbiddenException    If the user is not authorized for the HTTP method.
      */
-    public function __invoke($request, $handler)
+    public function __invoke(Request $request, RequestHandler $handler): ResponseInterface
     {
+        $path   = $request->getUri()->getPath();
+        $method = strtoupper($request->getMethod());
+
+
+        if (in_array($path, ['/login','/register','/nhl-api/login','/nhl-api/register'], true)) {
+                return $handler->handle($request);
+        }
+
         $authHeader = $request->getHeaderLine('Authorization');
-        if (!$authHeader || !str_starts_with($authHeader, 'Bearer ')) {
-            $response = new Response();
-            $response->getBody()->write(json_encode(['error' => 'Authorization header missing']));
-            return $response->withHeader('Content-Type', 'application/json')->withStatus(401);
+        if (!preg_match('/Bearer\s+(.*)$/i', $authHeader, $m)) {
+            throw new HttpUnauthorizedException($request, 'Missing or malformed Authorization header');
         }
-
-        $token = str_replace('Bearer ', '', $authHeader);
-
         try {
-            $decoded = JWT::decode($token, new Key($this->secret, 'HS256'));
-            $request = $request->withAttribute('user', $decoded);
-            return $handler->handle($request);
+            $decoded = JWT::decode($m[1], new Key($this->secret, 'HS256'));
         } catch (\Exception $e) {
-            $response = new Response();
-            $response->getBody()->write(json_encode(['error' => 'Invalid or expired token']));
-            return $response->withHeader('Content-Type', 'application/json')->withStatus(401);
+            throw new HttpUnauthorizedException($request, 'Invalid or expired token');
         }
+
+
+        $request = $request->withAttribute('user', $decoded);
+
+
+        $role = $decoded->role ?? '';
+        if ($method !== 'GET' && $role !== 'admin') {
+            throw new HttpForbiddenException($request, 'You do not have permission to perform this operation');
+        }
+
+
+        return $handler->handle($request);
     }
 }
