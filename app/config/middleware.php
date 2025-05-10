@@ -12,6 +12,7 @@
 declare(strict_types=1);
 
 use App\Handlers\CustomErrorHandler;
+use App\Middleware\AccessLogMiddleware;
 use App\Middleware\ContentNegotiationMiddleware;
 use Slim\App;
 use App\Middleware\JwtMiddleware;
@@ -29,6 +30,11 @@ return function (App $app): void {
      * Adds Content Negotiation Middleware to handle accepted content types.
      */
     $app->add(ContentNegotiationMiddleware::class);
+
+    /**
+     * Logs all incoming HTTP requests (method, URI, IP, query parameters).
+     */
+    $app->add(AccessLogMiddleware::class);
 
     /**
      * Adds Body Parsing Middleware to parse incoming request bodies.

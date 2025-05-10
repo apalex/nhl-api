@@ -6,47 +6,59 @@ use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
 
 /**
- * LogHelper provides static methods to log access and error messages
- * to separate log files using Monolog.
+ * Class LogHelper
+ *
+ * A utility class for handling application logging using Monolog.
+ * Provides static methods to log access and error messages to separate log files.
+ *
+ * Log files are stored in: [project_root]/var/logs/
  */
 class LogHelper
 {
+    /**
+     * Returns a configured Monolog Logger instance.
+     *
+     * @param string $type The type of logger ('access' or 'error').
+     * @return Logger The configured logger instance.
+     */
     private static function getLogger(string $type): Logger
     {
-        $logDir = __DIR__ . '/../../var/logs/';
-        if (!file_exists($logDir)) {
-            mkdir($logDir, 0777, true);
-        }
+        // Construct a general path to the logs directory
+        $logPath = dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'var' . DIRECTORY_SEPARATOR . 'logs' . DIRECTORY_SEPARATOR;
 
-        $file = $type === 'error' ? 'error.log' : 'access.log';
+        // Create a logger instance for the given type
         $logger = new Logger($type);
-        $logger->pushHandler(new StreamHandler($logDir . $file, Logger::DEBUG));
+
+        // Choose the correct file name based on log type
+        $file = $type === 'access' ? 'access.log' : 'error.log';
+
+        // Push a handler for writing to the file (DEBUG level captures all log levels)
+        $logger->pushHandler(new StreamHandler($logPath . $file, Logger::DEBUG));
 
         return $logger;
     }
 
     /**
-     * Logs access-related information to access.log.
+     * Logs access-related events to access.log.
      *
-     * @param array $data Associative array containing method, uri, ip, user, etc.
+     * @param string $message A brief message describing the event.
+     * @param array $context Optional additional details: method, URI, IP, user, query parameters, etc.
      * @return void
      */
-    public static function logAccess(array $data): void
+    public static function logAccess(string $message, array $context = []): void
     {
-        $logger = self::getLogger('access');
-        $logger->info('Access Log', $data);
+        self::getLogger('access')->info($message, $context);
     }
 
     /**
-     * Logs errors to error.log.
+     * Logs error-related events to error.log.
      *
-     * @param string $message Error message.
-     * @param array $context Additional context for the error.
+     * @param string $message The error message.
+     * @param array $context Optional context such as file, line, exception stack trace, etc.
      * @return void
      */
     public static function logError(string $message, array $context = []): void
     {
-        $logger = self::getLogger('error');
-        $logger->error($message, $context);
+        self::getLogger('error')->error($message, $context);
     }
 }
