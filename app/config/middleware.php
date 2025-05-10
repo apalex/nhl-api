@@ -32,6 +32,14 @@ return function (App $app): void {
     $app->add(ContentNegotiationMiddleware::class);
 
     /**
+     * Adds JWT Authentication & Authorization middleware:
+     * - Skips /login and /register
+     * - Allows GET for any authenticated user
+     * - Restricts POST/PUT/DELETE to admins only
+     */
+    $app->add(new JwtMiddleware('1234'));
+
+    /**
      * Logs all incoming HTTP requests (method, URI, IP, query parameters).
      */
     $app->add(AccessLogMiddleware::class);
@@ -45,14 +53,6 @@ return function (App $app): void {
      * Adds Routing Middleware to enable routing features.
      */
     $app->addRoutingMiddleware();
-
-    /**
-     * Adds JWT Authentication & Authorization middleware:
-     * - Skips /login and /register
-     * - Allows GET for any authenticated user
-     * - Restricts POST/PUT/DELETE to admins only
-     */
-    $app->add(new JwtMiddleware('1234'));
 
     /**
      * Adds Error Handling Middleware, which must be added last.

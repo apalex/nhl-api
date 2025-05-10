@@ -190,24 +190,6 @@ CREATE TABLE `statistics` (
   `shot_on_target` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- --------------------------------------------------------
-
---
--- Table structure for table `users`
---
-
-CREATE TABLE `users` (
-  `user_id` int(11) NOT NULL,
-  `role` varchar(50) DEFAULT NULL,
-  `username` varchar(50) DEFAULT NULL,
-  `email` varchar(50) DEFAULT NULL,
-  `password` varchar(50) DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-
-ALTER TABLE users
-  MODIFY password VARCHAR(255) NOT NULL;
 
 --
 -- Dumping data for table `statistics`
@@ -251,6 +233,41 @@ INSERT INTO `teams` (`team_id`, `team_name`, `coach_id`, `arena_id`, `founding_y
 (5, 'Detroit Red Wings', 5, 5, 1926, 11, 'Steve Yzerman', 'DET'),
 (6, 'New York Rangers', 6, 6, 1926, 4, 'Chris Drury', 'NYR'),
 (7, 'Edmonton Oilers', 7, 7, 1972, 5, 'Ken Holland', 'EDM');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `users`
+--
+
+CREATE TABLE `users` (
+  `user_id` int(11) NOT NULL,
+  `role` varchar(50) DEFAULT NULL,
+  `username` varchar(50) DEFAULT NULL,
+  `email` varchar(50) DEFAULT NULL,
+  `password` varchar(50) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
+ALTER TABLE users
+  MODIFY password VARCHAR(255) NOT NULL;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `logs`
+--
+
+CREATE TABLE `logs` (
+  `log_id` INT(11) NOT NULL AUTO_INCREMENT,
+  `user_id` INT(11) NOT NULL,
+  `username` VARCHAR(50) NOT NULL,
+  `http_method` VARCHAR(10) NOT NULL,
+  `uri` VARCHAR(255) NOT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`log_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Indexes for dumped tables

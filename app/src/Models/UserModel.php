@@ -14,7 +14,7 @@ use PDO;
 class UserModel extends BaseModel
 {
     /**
-     * TeamsModel constructor.
+     * UserModel constructor.
      * @param PDOService $pdo The PDO service instance for database interaction.
      */
     public function __construct(PDOService $pdo)
@@ -85,7 +85,7 @@ class UserModel extends BaseModel
         $sql = "SELECT * FROM users WHERE username = :username LIMIT 1";
 
         $result = $this->fetchSingle($sql, ['username' => $username]);
-        
+
         return $result ?: null;
     }
 }
