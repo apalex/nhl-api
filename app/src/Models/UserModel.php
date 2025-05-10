@@ -72,4 +72,20 @@ class UserModel extends BaseModel
         //* If COUNT > 0, then username is already in use
         return $this->fetchSingle($sql, ['username' => $username])["COUNT(*)"] > 0;
     }
+
+    /**
+     * Retrieves a user by username.
+     *
+     * @param string $username
+     * @return array|null
+     */
+    public function getUserByUsername(string $username): ?array
+    {
+        //* SQL Query
+        $sql = "SELECT * FROM users WHERE username = :username LIMIT 1";
+
+        $result = $this->fetchSingle($sql, ['username' => $username]);
+        
+        return $result ?: null;
+    }
 }
