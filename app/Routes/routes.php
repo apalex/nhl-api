@@ -12,46 +12,32 @@ use App\Helpers\DateTimeHelper;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use App\Controllers\AuthController;
+use App\Controllers\AuthenticateController;
 use App\Controllers\PERController;
 
 return static function (Slim\App $app): void {
 
-    // Routes without authentication check: /login, /token
-
-    // Routes with authentication
-    //* ROUTE: GET /
+    //* ROUTE: GET
     $app->get('/', [AboutController::class, 'handleAboutWebService']);
 
-    //* ROUTE: GET /teams
     $app->get('/teams', [TeamsController::class, 'handleGetTeams']);
 
-    //* ROUTE: GET /teams/{team_id}
     $app->get('/teams/{team_id}', [TeamsController::class, 'handleGetTeamByID']);
 
-    //* ROUTE: GET /teams/{team_id}/games
     $app->get('/teams/{team_id}/games', [TeamsController::class, 'handleGetTeamGames']);
 
-    //* ROUTE: GET /games
     $app->get('/games', [GamesController::class, 'handleGetGames']);
 
-    //* ROUTE: GET /games/{game_id}
     $app->get('/games/{game_id}', [GamesController::class, 'handleGetGameByID']);
 
-    //* ROUTE: GET /games/{game_id}/stats
     $app->get('/games/{game_id}/stats', [GamesController::class, 'handleGetGameStats']);
 
-    //* ROUTE: GET /arenas
     $app->get('/arenas', [ArenasController::class, 'handleGetArenas']);
 
-    //* ROUTE: GET /arenas/{arena_id}
     $app->get('/arenas/{arena_id}', [ArenasController::class, 'handleGetArenaByID']);
 
-    //* ROUTE: GET /arenas/{arena_id}/games
     $app->get('/arenas/{arena_id}/games', [ArenasController::class, 'handleGetArenaGames']);
 
-    // $app->get('/test', [TestController::class, 'handleTest']);
-
-    //* ROUTE: GET /ping
     $app->get('/ping', function (Request $request, Response $response, $args) {
 
         $payload = [
@@ -61,6 +47,7 @@ return static function (Slim\App $app): void {
         $response->getBody()->write(json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_PARTIAL_OUTPUT_ON_ERROR));
         return $response;
     });
+
     // Example route to test error handling
     $app->get('/error', function (Request $request, Response $response, $args) {
         throw new \Slim\Exception\HttpNotFoundException($request, "Something went wrong");
@@ -75,8 +62,6 @@ return static function (Slim\App $app): void {
 
     $app->post('/computePER', [PERController::class, 'handlePostPER']);
 
-
-
     //* ROUTE: PUT
     $app->put('/teams', [TeamsController::class, 'handlePutTeams']);
 
@@ -90,29 +75,15 @@ return static function (Slim\App $app): void {
     $app->delete('/games', [GamesController::class, 'handleDeleteGame']);
 
     $app->delete('/arenas', [ArenasController::class, 'handleDeleteArenas']);
+
     //*Login Routes:
     /**
      * Registers a new user.
-     *
-     * @param Request $request
-     * @param Response $response
-     * @return Response
      */
-    $app->post('/register', function ($request, $response, $args) use ($app) {
-        $container = $app->getContainer();
-        $controller = new AuthController($container->get(\App\Core\PDOService::class));
-        return $controller->register($request, $response);
-    });
+    $app->post('/register', [RegisterController::class, 'handleRegister']);
+
     /**
      * Logs in an existing user.
-     *
-     * @param Request $request
-     * @param Response $response
-     * @return Response
      */
-    $app->post('/login', function ($request, $response, $args) use ($app) {
-        $container = $app->getContainer();
-        $controller = new AuthController($container->get(\App\Core\PDOService::class));
-        return $controller->login($request, $response);
-    });
+    $app->post('/login', [AuthController::class, 'handleLogin']);
 };
