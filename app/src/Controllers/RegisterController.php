@@ -2,36 +2,35 @@
 
 namespace App\Controllers;
 
-use App\Exceptions\HttpInvalidIDException;
-use App\Exceptions\HttpInvalidInputException;
 use App\Models\UserModel;
 use App\Services\RegisterService;
+use App\Services\LoginService;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
-use Slim\Exception\HttpNotFoundException;
 
 /**
- * Controller for handling register-related requests.
+ * Handles user authentication.
  */
 class RegisterController extends BaseController
 {
     /**
+     * RegisterController constructor.
+     *
      * @var UserModel $user_model The model handling user data.
      * @param RegisterService $register_service The register service instance.
+     *
      */
     public function __construct(private UserModel $user_model, private RegisterService $register_service) {}
 
-    //* ROUTE: POST /register
-
     /**
-     * Handles inserting a user into the database.
+     * Registers a user by validating input, hashing the password, and inserting user info.
      *
-     * @param Request $request The incoming HTTP request.
-     * @param Response $response The outgoing HTTP response.
+     * @param Request $request The HTTP request containing user input.
+     * @param Response $response The HTTP response object to write to.
      *
-     * @return Response JSON response containing HTTP response to the request.
+     * @return Response The HTTP response with a success message.
      */
-    public function handlePostUser(Request $request, Response $response): Response
+    public function handleRegister(Request $request, Response $response): Response
     {
         //* Validate HTTP Method Sent
         $this->validateHTTPMethod($request, ['POST']);
@@ -44,15 +43,11 @@ class RegisterController extends BaseController
 
         //* Valid HTTP Response Message Structure
         if ($result->isSuccess()) {
-            $status = [
+            $payload = [
                 "Type" => "successful",
                 'Code' => 201,
                 "Content-Type" => "application/json",
                 'Message' => $result->getMessage()
-            ];
-            $payload = [
-                "status" => $status,
-                "user" => $result->getData()
             ];
             return $this->renderJson($response, $payload, 201);
         }
@@ -68,7 +63,7 @@ class RegisterController extends BaseController
                 "status" => $status,
                 "details" => $result->getErrors()
             ];
-            return $this->renderJson($response, $payload, 422);
+            return $this->renderJson($response, $payload, 422)->withHeader('Content-Type', 'application/json');
         }
     }
 }
