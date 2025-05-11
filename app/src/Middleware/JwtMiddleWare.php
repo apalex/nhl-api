@@ -61,7 +61,7 @@ class JwtMiddleware
         }
 
 
-        $request = $request->withAttribute('user', $decoded);
+        $request = $request->withAttribute('user', (array) $decoded);
 
 
         $role = $decoded->role ?? '';

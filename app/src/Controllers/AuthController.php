@@ -50,13 +50,22 @@ class AuthController extends BaseController
         $payload = [
             'iat' => $issuedAt,
             'exp' => $expirationTime,
-            'uid' => $user['user_id'],
+            'id' => $user['user_id'],
+            'username' => $user['username'],
             'role' => $user['role']
         ];
 
         $token = JWT::encode($payload, $_ENV['JWT_SECRET'], 'HS256');
 
-        $response->getBody()->write(json_encode(['token' => $token]));
-        return $response->withHeader('Content-Type', 'application/json');
+        return $this->renderJson($response,
+        [
+            "status" => array(
+                "Type" => "successful",
+                "Code" => 200,
+                "Content-Type" => "application/json",
+                "Message" => "Use token for authentication. Duration: 60 minutes"
+            ),
+            "token" => $token
+        ]);
     }
 }

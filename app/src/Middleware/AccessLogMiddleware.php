@@ -82,7 +82,8 @@ class AccessLogMiddleware
             'user_id' => $userId,
             'username' => $username,
             'http_method' => $method,
-            'uri' => $uri
+            'uri' => $uri,
+            'ip_address' => $ip
         ]);
 
         return $handler->handle($request);

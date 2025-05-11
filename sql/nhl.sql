@@ -265,6 +265,7 @@ CREATE TABLE `logs` (
   `username` VARCHAR(50) NOT NULL,
   `http_method` VARCHAR(10) NOT NULL,
   `uri` VARCHAR(255) NOT NULL,
+  `ip_address` VARCHAR(255) NOT NULL,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`log_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

@@ -50,6 +50,7 @@ class LoginService
         //* Successful
         return [
             'user_id' => $db_user['user_id'],
+            'username' => $db_user['username'],
             'role' => $db_user['role']
         ];
     }

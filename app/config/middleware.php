@@ -32,17 +32,17 @@ return function (App $app): void {
     $app->add(ContentNegotiationMiddleware::class);
 
     /**
+     * Logs all incoming HTTP requests (method, URI, IP, query parameters).
+     */
+    $app->add(AccessLogMiddleware::class);
+
+    /**
      * Adds JWT Authentication & Authorization middleware:
      * - Skips /login and /register
      * - Allows GET for any authenticated user
      * - Restricts POST/PUT/DELETE to admins only
      */
     $app->add(new JwtMiddleware('1234'));
-
-    /**
-     * Logs all incoming HTTP requests (method, URI, IP, query parameters).
-     */
-    $app->add(AccessLogMiddleware::class);
 
     /**
      * Adds Body Parsing Middleware to parse incoming request bodies.
