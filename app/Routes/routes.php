@@ -14,6 +14,7 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use App\Controllers\AuthController;
 use App\Controllers\AuthenticateController;
 use App\Controllers\PERController;
+use App\Controllers\SOGPController;
 
 return static function (Slim\App $app): void {
 
@@ -61,6 +62,8 @@ return static function (Slim\App $app): void {
     $app->post('/arenas', [ArenasController::class, 'handlePostArenas']);
 
     $app->post('/computePER', [PERController::class, 'handlePostPER']);
+
+    $app->post('/computeSOGP', [SOGPController::class, 'handlePostSOGP']);
 
     //* ROUTE: PUT
     $app->put('/teams', [TeamsController::class, 'handlePutTeams']);

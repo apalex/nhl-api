@@ -65,6 +65,14 @@ class PERController extends BaseController
         $per = $this->perModel->calculatePER($goals, $assists, $plusMinus, $penaltyMinutes, $gamesPlayed);
 
         //? Step 5 - Return
-        return $this->renderJson($response, ["player_efficiency_rating" => round($per, 3)]);
+        return $this->renderJson($response,
+        [
+            "status" => array(
+                "Type" => "successful",
+                "Code" => 200,
+                "Content-Type" => "application/json"
+            ),
+            "player_efficiency_rating" => round($per, 3)
+        ]);
     }
 }
