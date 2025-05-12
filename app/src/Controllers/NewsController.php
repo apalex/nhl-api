@@ -17,7 +17,7 @@ class NewsController extends BaseController
      */
     private string $newsApiKey = 'f556ad500d1c478092f95f1de1deebc0';
 
-    public function __construct(){}
+    public function __construct() {}
     /**
      * Handles GET /composite/nhl-news
      *
@@ -37,7 +37,7 @@ class NewsController extends BaseController
                     'apiKey'    => $this->newsApiKey,
                     'language'  => 'en',
                     'pageSize'  => 5
-                    ]
+                ]
             ]);
 
             $newsJson = json_decode($apiResponse->getBody(), true);
@@ -51,19 +51,20 @@ class NewsController extends BaseController
                     'publishedAt'   => $article['publishedAt']
                 ];
             }, $articles);
-
         } catch (\Exception $ex) {
             $newsData = ['Error' => 'News is not available!'];
         }
 
-        return $this->renderJson($response,
-        [
-            "status" => array(
-                "Type" => "successful",
-                "Code" => 200,
-                "Content-Type" => "application/json"
-            ),
-            'news' => $newsData
-        ]);
+        return $this->renderJson(
+            $response,
+            [
+                "status" => array(
+                    "Type" => "successful",
+                    "Code" => 200,
+                    "Content-Type" => "application/json"
+                ),
+                'news' => $newsData
+            ]
+        );
     }
 }

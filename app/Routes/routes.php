@@ -16,6 +16,7 @@ use App\Controllers\PERController;
 use App\Controllers\SOGPController;
 use App\Controllers\CityWeatherController;
 use App\Controllers\NewsController;
+use App\Controllers\SchedulesController;
 
 return static function (Slim\App $app): void {
 
@@ -43,6 +44,8 @@ return static function (Slim\App $app): void {
     $app->get('/city-weather', CityWeatherController::class . ':getCityWeather');
 
     $app->get('/nhl-news', [NewsController::class, 'getNHLNews']);
+
+    $app->get('/schedules', [SchedulesController::class, 'getSchedules']);
 
     $app->get('/ping', function (Request $request, Response $response, $args) {
 

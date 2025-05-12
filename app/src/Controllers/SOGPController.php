@@ -52,14 +52,16 @@ class SOGPController extends BaseController
         $sogp = ($goals_scored / $shot_on_target) * 100;
 
         //? Step 5 - Return
-        return $this->renderJson($response,
-        [
-            "status" => array(
-                "Type" => "successful",
-                "Code" => 200,
-                "Content-Type" => "application/json"
-            ),
-            "Shot on Goal %" => round($sogp, 3) . "%"
-        ]);
+        return $this->renderJson(
+            $response,
+            [
+                "status" => array(
+                    "Type" => "successful",
+                    "Code" => 200,
+                    "Content-Type" => "application/json"
+                ),
+                "Shot on Goal %" => round($sogp, 3) . "%"
+            ]
+        );
     }
 }

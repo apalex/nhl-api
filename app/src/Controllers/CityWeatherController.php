@@ -69,14 +69,16 @@ class CityWeatherController extends BaseController
             ];
         }
 
-        return $this->renderJson($response,
-        [
-            "status" => array(
-                "Type" => "successful",
-                "Code" => 200,
-                "Content-Type" => "application/json"
-            ),
-            "Weather" => $result
-        ]);
+        return $this->renderJson(
+            $response,
+            [
+                "status" => array(
+                    "Type" => "successful",
+                    "Code" => 200,
+                    "Content-Type" => "application/json"
+                ),
+                "weather" => $result
+            ]
+        );
     }
 }
