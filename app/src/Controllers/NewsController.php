@@ -56,7 +56,14 @@ class NewsController extends BaseController
             $newsData = ['Error' => 'News is not available!'];
         }
 
-        $response->getBody()->write(json_encode(['news' => $newsData]));
-        return $response->withHeader('Content-Type', 'application/json');
+        return $this->renderJson($response,
+        [
+            "status" => array(
+                "Type" => "successful",
+                "Code" => 200,
+                "Content-Type" => "application/json"
+            ),
+            'news' => $newsData
+        ]);
     }
 }

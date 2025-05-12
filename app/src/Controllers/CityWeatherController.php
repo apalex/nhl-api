@@ -10,7 +10,7 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 /**
  * Controller to provide arena and city weather information.
  */
-class CityWeatherController
+class CityWeatherController extends BaseController
 {
     private ArenasModel $arenasModel;
     private string $weatherApiKey = 'e7e00fe03ed498d402772a4dee37112b';
@@ -69,7 +69,14 @@ class CityWeatherController
             ];
         }
 
-        $response->getBody()->write(json_encode($result));
-        return $response->withHeader('Content-Type', 'application/json');
+        return $this->renderJson($response,
+        [
+            "status" => array(
+                "Type" => "successful",
+                "Code" => 200,
+                "Content-Type" => "application/json"
+            ),
+            "Weather" => $result
+        ]);
     }
 }
