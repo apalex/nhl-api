@@ -19,7 +19,7 @@ class NewsController extends BaseController
 
     public function __construct() {}
     /**
-     * Handles GET /composite/nhl-news
+     * Handles GET nhl-news
      *
      * @param Request $request
      * @param Response $response
