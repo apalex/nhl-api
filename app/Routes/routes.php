@@ -5,7 +5,6 @@ declare(strict_types=1);
 use App\Controllers\AboutController;
 use App\Controllers\ArenasController;
 use App\Controllers\GamesController;
-use App\Controllers\LoginController;
 use App\Controllers\RegisterController;
 use App\Controllers\PossessionController;
 use App\Controllers\TeamsController;
@@ -13,10 +12,10 @@ use App\Helpers\DateTimeHelper;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use App\Controllers\AuthController;
-use App\Controllers\AuthenticateController;
 use App\Controllers\PERController;
 use App\Controllers\SOGPController;
 use App\Controllers\CityWeatherController;
+use App\Controllers\NewsController;
 
 return static function (Slim\App $app): void {
 
@@ -42,6 +41,8 @@ return static function (Slim\App $app): void {
     $app->get('/arenas/{arena_id}/games', [ArenasController::class, 'handleGetArenaGames']);
 
     $app->get('/city-weather', CityWeatherController::class . ':getCityWeather');
+
+    $app->get('/nhl-news', [NewsController::class, 'getNHLNews']);
 
     $app->get('/ping', function (Request $request, Response $response, $args) {
 
