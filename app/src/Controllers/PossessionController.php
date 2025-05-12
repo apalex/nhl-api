@@ -20,7 +20,7 @@ use Psr\Http\Message\ServerRequestInterface as Request;
  *    "shotsAgainst": 25
  * }
  */
-class PossessionController
+class PossessionController extends BaseController
 {
     /**
      * Calculates possession percentage based on shots for and against.
@@ -49,12 +49,17 @@ class PossessionController
         $possession = ($totalShots === 0) ? 0 : round(($shotsFor / $totalShots) * 100, 2);
 
         // Success Response
-        $response->getBody()->write(json_encode([
+        //? Step 5 - Return
+        return $this->renderJson($response,
+        [
+            "status" => array(
+                "Type" => "successful",
+                "Code" => 200,
+                "Content-Type" => "application/json"
+            ),
             'shotsFor' => $shotsFor,
             'shotsAgainst' => $shotsAgainst,
             'possessionPercentage' => $possession . '%'
-        ]));
-
-        return $response->withHeader('Content-Type', 'application/json');
+        ]);
     }
 }
