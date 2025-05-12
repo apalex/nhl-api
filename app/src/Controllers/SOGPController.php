@@ -59,7 +59,7 @@ class SOGPController extends BaseController
                 "Code" => 200,
                 "Content-Type" => "application/json"
             ),
-            "Shot on Goal %" => round($sogp, 3)
+            "Shot on Goal %" => round($sogp, 3) . "%"
         ]);
     }
 }
