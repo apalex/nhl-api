@@ -16,6 +16,7 @@ use App\Controllers\AuthController;
 use App\Controllers\AuthenticateController;
 use App\Controllers\PERController;
 use App\Controllers\SOGPController;
+use App\Controllers\CityWeatherController;
 
 return static function (Slim\App $app): void {
 
@@ -39,6 +40,8 @@ return static function (Slim\App $app): void {
     $app->get('/arenas/{arena_id}', [ArenasController::class, 'handleGetArenaByID']);
 
     $app->get('/arenas/{arena_id}/games', [ArenasController::class, 'handleGetArenaGames']);
+
+    $app->get('/city-weather', CityWeatherController::class . ':getCityWeather');
 
     $app->get('/ping', function (Request $request, Response $response, $args) {
 
