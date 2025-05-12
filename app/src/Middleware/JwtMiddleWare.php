@@ -27,8 +27,7 @@ class JwtMiddleware
     {
         $this->secret = $secret;
     }
-
-    /**
+ /**
      * Processes incoming requests and validates the JWT token.
      *
      * @param Request        $request Incoming request with Authorization header.
@@ -45,30 +44,34 @@ class JwtMiddleware
         $path   = $request->getUri()->getPath();
         $method = strtoupper($request->getMethod());
 
-
-        if (in_array($path, ['/login','/register','/nhl-api/login','/nhl-api/register'], true)) {
-                return $handler->handle($request);
+        if (in_array($path, ['/login', '/register', '/nhl-api/login', '/nhl-api/register'], true)) {
+            return $handler->handle($request);
         }
 
         $authHeader = $request->getHeaderLine('Authorization');
-        if (!preg_match('/Bearer\s+(.*)$/i', $authHeader, $m)) {
-            throw new HttpUnauthorizedException($request, 'Missing or malformed Authorization header');
+
+        // Check for missing Authorization header
+        if (empty($authHeader)) {
+            throw new HttpUnauthorizedException($request, 'Missing Authorization header');
         }
+
+        // Validate Bearer Token format
+        if (!preg_match('/Bearer\s+(.*)$/i', $authHeader, $m)) {
+            throw new HttpUnauthorizedException($request, 'Invalid authorization header');
+        }
+
         try {
             $decoded = JWT::decode($m[1], new Key($this->secret, 'HS256'));
         } catch (\Exception $e) {
-            throw new HttpUnauthorizedException($request, 'Invalid or expired token');
+            throw new HttpUnauthorizedException($request, 'Invalid authorization header');
         }
 
-
         $request = $request->withAttribute('user', (array) $decoded);
-
 
         $role = $decoded->role ?? '';
         if ($method !== 'GET' && $role !== 'admin') {
             throw new HttpForbiddenException($request, 'You do not have permission to perform this operation');
         }
-
 
         return $handler->handle($request);
     }

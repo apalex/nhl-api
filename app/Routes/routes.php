@@ -7,6 +7,7 @@ use App\Controllers\ArenasController;
 use App\Controllers\GamesController;
 use App\Controllers\LoginController;
 use App\Controllers\RegisterController;
+use App\Controllers\PossessionController;
 use App\Controllers\TeamsController;
 use App\Helpers\DateTimeHelper;
 use Psr\Http\Message\ResponseInterface as Response;
@@ -65,6 +66,7 @@ return static function (Slim\App $app): void {
 
     $app->post('/computeSOGP', [SOGPController::class, 'handlePostSOGP']);
 
+    $app->post('/possession', [PossessionController::class, 'calculatePossession']);
     //* ROUTE: PUT
     $app->put('/teams', [TeamsController::class, 'handlePutTeams']);
 
