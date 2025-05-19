@@ -375,13 +375,13 @@ class GamesController extends BaseController
      * @param mixed $game_info The game information to validate.
      * @param Request $request The HTTP request.
      *
-     * @throws HttpInvalidInputException If no game record is found.
+     * @throws HttpNotFoundException If no game record is found.
      */
     private function validateGameInfo($game_info, Request $request)
     {
         if (count($game_info['data']) <= 0) {
             //! no matching record in the db
-            throw new HttpInvalidInputException($request, "No matching record for game info found.");
+            throw new HttpNotFoundException($request, "No matching record for game info found.");
         }
     }
 
@@ -391,13 +391,13 @@ class GamesController extends BaseController
      * @param mixed $game_info The game information to validate.
      * @param Request $request The HTTP request.
      *
-     * @throws HttpInvalidInputException If no game record is found.
+     * @throws HttpNotFoundException If no game record is found.
      */
     private function validateGame($game_info, Request $request)
     {
         if (count($game_info) == 0) {
             //! no matching record in the db
-            throw new HttpInvalidInputException($request, "No matching record for game found.");
+            throw new HttpNotFoundException($request, "No matching record for game found.");
         }
     }
 
